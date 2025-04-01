@@ -139,45 +139,58 @@ def upload_image():
         
         subject = request.form.get('subject', 'Toán học')
         
+        # Tạo thư mục upload nếu chưa tồn tại
+        os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
+        
         # Process camera image
         if 'image_data' in request.form:
-            # Get base64 image data
-            image_data = request.form['image_data']
-            if image_data.startswith('data:image'):
-                # Remove the data URL prefix
-                image_data = image_data.split(',')[1]
-            
-            # Decode base64 image
-            image_bytes = base64.b64decode(image_data)
-            image = Image.open(io.BytesIO(image_bytes))
-            
-            # Generate unique filename
-            filename = f"camera_{subject}_{os.urandom(8).hex()}.jpg"
-            filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-            
-            # Save the image
-            image.save(filepath)
+            try:
+                # Get base64 image data
+                image_data = request.form['image_data']
+                if image_data.startswith('data:image'):
+                    # Remove the data URL prefix
+                    image_data = image_data.split(',')[1]
+                
+                # Decode base64 image
+                image_bytes = base64.b64decode(image_data)
+                image = Image.open(io.BytesIO(image_bytes))
+                
+                # Generate unique filename
+                filename = f"camera_{subject}_{os.urandom(8).hex()}.jpg"
+                filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+                
+                # Save the image
+                image.save(filepath)
+                logger.debug(f"Camera image saved to {filepath}")
+            except Exception as e:
+                logger.error(f"Error processing camera image: {str(e)}")
+                return jsonify({"error": f"Lỗi khi xử lý ảnh từ camera: {str(e)}"}), 500
         else:
-            # Process uploaded file
-            file = request.files['image']
-            if file.filename == '':
-                return jsonify({"error": "Không có file nào được chọn"}), 400
+            try:
+                # Process uploaded file
+                file = request.files['image']
+                if file.filename == '':
+                    return jsonify({"error": "Không có file nào được chọn"}), 400
+                    
+                if not allowed_file(file.filename):
+                    return jsonify({"error": "Loại file không được hỗ trợ"}), 400
+                    
+                # Generate unique filename
+                filename = f"upload_{subject}_{os.urandom(8).hex()}.{file.filename.rsplit('.', 1)[1].lower()}"
+                filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
                 
-            if not allowed_file(file.filename):
-                return jsonify({"error": "Loại file không được hỗ trợ"}), 400
-                
-            # Generate unique filename
-            filename = f"upload_{subject}_{os.urandom(8).hex()}.{file.filename.rsplit('.', 1)[1].lower()}"
-            filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-            
-            # Save the file
-            file.save(filepath)
+                # Save the file
+                file.save(filepath)
+                logger.debug(f"Uploaded file saved to {filepath}")
+            except Exception as e:
+                logger.error(f"Error processing uploaded file: {str(e)}")
+                return jsonify({"error": f"Lỗi khi xử lý file tải lên: {str(e)}"}), 500
         
         # Get image URL
         image_url = url_for('static', filename=f'uploads/{filename}')
         
         # Analyze the image with AI - sử dụng API Gemini
-        prompt = f"Đây là bài tập môn {subject} trong hình ảnh có đường dẫn: {image_url}. Hãy giải bài tập trong ảnh này mà không đưa ra giải thích chi tiết. Trả lời bằng tiếng Việt."
+        prompt = f"Đây là bài tập môn {subject} trong hình ảnh. Hãy giải bài tập trong ảnh này. Trả lời bằng tiếng Việt."
         
         # Sử dụng specialized API với chế độ giải bài tập
         response_text = get_specialized_ai_response(prompt, subject, "giải bài tập")

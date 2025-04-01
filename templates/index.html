@@ -101,21 +101,24 @@
                     <!-- Message Input Area -->
                     <div class="card-footer bg-light">
                         <form id="messageForm">
-                            <div class="input-group">
-                                <textarea id="messageInput" class="form-control" 
-                                         placeholder="Nhập câu hỏi hoặc bài tập cần giải ở đây..." 
-                                         rows="3"></textarea>
-                                <div class="d-flex flex-column">
-                                    <button id="sendButton" class="btn btn-primary mb-1" type="submit">
-                                        <i class="fas fa-paper-plane me-1"></i>Gửi
-                                    </button>
-                                    <button id="uploadImageBtn" class="btn btn-secondary mb-1" type="button">
-                                        <i class="fas fa-image me-1"></i>Tải ảnh
-                                    </button>
-                                    <button id="takePictureBtn" class="btn btn-info" type="button">
-                                        <i class="fas fa-camera me-1"></i>Chụp ảnh
-                                    </button>
+                            <div class="position-relative mb-2">
+                                <div class="input-hint bg-light text-muted px-2 py-1 small rounded-pill position-absolute" style="bottom: 8px; left: 8px; z-index: 3;">
+                                    <i class="fas fa-lightbulb me-1"></i>Giải bài tập bằng ảnh
                                 </div>
+                                <textarea id="messageInput" class="form-control" 
+                                        placeholder="Nhập câu hỏi hoặc bài tập cần giải ở đây..." 
+                                        rows="3"></textarea>
+                            </div>
+                            <div class="d-flex justify-content-end">
+                                <button id="uploadImageBtn" class="btn btn-secondary me-2" type="button">
+                                    <i class="fas fa-image me-1"></i>Tải ảnh
+                                </button>
+                                <button id="takePictureBtn" class="btn btn-info me-2" type="button">
+                                    <i class="fas fa-camera me-1"></i>Chụp ảnh
+                                </button>
+                                <button id="sendButton" class="btn btn-primary" type="submit">
+                                    <i class="fas fa-paper-plane me-1"></i>Gửi
+                                </button>
                             </div>
                         </form>
                         <!-- Hidden file input for image upload -->

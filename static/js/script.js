@@ -359,9 +359,27 @@ document.addEventListener('DOMContentLoaded', function() {
      */
     async function startCamera() {
         try {
+            // Đóng modal camera trước khi bắt đầu
+            cameraModal.modal._element.addEventListener('hidden.bs.modal', function (e) {
+                stopCamera();
+                cameraCanvas.style.display = 'none';
+                cameraPreview.style.display = 'none';
+                cameraPlaceholder.style.display = 'block';
+                
+                // Reset buttons
+                startCameraBtn.disabled = false;
+                capturePictureBtn.disabled = true;
+                retakePictureBtn.disabled = true;
+                sendPictureBtn.disabled = true;
+            });
+            
             // Request camera access
             stream = await navigator.mediaDevices.getUserMedia({ 
-                video: { facingMode: 'environment' } 
+                video: { 
+                    facingMode: 'environment',
+                    width: { ideal: 1280 },
+                    height: { ideal: 720 }
+                } 
             });
             
             // Display camera preview
@@ -374,7 +392,13 @@ document.addEventListener('DOMContentLoaded', function() {
             startCameraBtn.disabled = true;
             
             // Start playing the video
-            cameraPreview.play();
+            try {
+                await cameraPreview.play();
+                console.log("Camera started successfully");
+            } catch (playError) {
+                console.error("Error playing video:", playError);
+                throw playError;
+            }
         } catch (error) {
             console.error('Error accessing camera:', error);
             addErrorMessage('Không thể truy cập camera. Vui lòng kiểm tra quyền truy cập.');
@@ -432,25 +456,39 @@ document.addEventListener('DOMContentLoaded', function() {
      * Send captured image from camera to server
      */
     function sendCapturedImage() {
-        if (!capturedImage) return;
+        if (!capturedImage) {
+            console.error("No image captured");
+            addErrorMessage('Không có ảnh để gửi. Vui lòng chụp ảnh trước.');
+            return;
+        }
         
-        // Hide camera modal
-        cameraModal.hide();
-        
-        // Show loading overlay
-        loadingOverlay.classList.remove('d-none');
-        
-        // Set image data in hidden form
-        imageDataInput.value = capturedImage;
-        imageSubjectInput.value = currentSubject;
-        
-        // Create form data
-        const formData = new FormData();
-        formData.append('image_data', capturedImage);
-        formData.append('subject', currentSubject);
-        
-        // Send to server
-        sendImageToServer(formData, 'camera_capture.jpg');
+        try {
+            // Hide camera modal
+            cameraModal.hide();
+            
+            // Show loading overlay
+            loadingOverlay.classList.remove('d-none');
+            
+            // Set image data in hidden form
+            imageDataInput.value = capturedImage;
+            imageSubjectInput.value = currentSubject;
+            
+            // Create form data
+            const formData = new FormData();
+            formData.append('image_data', capturedImage);
+            formData.append('subject', currentSubject);
+            
+            // Log image data information for debugging
+            console.log("Sending image data:", capturedImage.substring(0, 50) + "...");
+            console.log("Subject:", currentSubject);
+            
+            // Send to server
+            sendImageToServer(formData, 'camera_capture.jpg');
+        } catch (error) {
+            console.error("Error sending captured image:", error);
+            addErrorMessage('Lỗi khi gửi ảnh: ' + error.message);
+            loadingOverlay.classList.add('d-none');
+        }
     }
     
     /**

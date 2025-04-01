@@ -154,6 +154,7 @@ body {
     border-radius: 20px;
     border: 1px solid #ddd;
     padding: 12px 15px;
+    padding-left: 120px; /* Tạo không gian cho hint */
     resize: none;
     transition: border 0.3s;
 }
@@ -163,14 +164,25 @@ body {
     box-shadow: 0 0 0 0.2rem rgba(78, 84, 200, 0.25);
 }
 
+.input-hint {
+    transition: all 0.3s ease;
+    border: 1px solid #ddd;
+    opacity: 0.8;
+    cursor: pointer;
+}
+
+.input-hint:hover {
+    background-color: var(--primary-color) !important;
+    color: white !important;
+    opacity: 1;
+}
+
 #sendButton, #uploadImageBtn, #takePictureBtn {
     border-radius: 20px;
     padding: 8px 20px;
-    margin-left: 10px;
     border: none;
     font-weight: 500;
-    align-self: flex-end;
-    width: 100%;
+    min-width: 120px;
 }
 
 #sendButton {
