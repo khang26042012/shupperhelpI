@@ -73,13 +73,16 @@ document.addEventListener('DOMContentLoaded', function() {
      * Toggle visibility of image options
      */
     function toggleImageOptions() {
+        console.log("toggleImageOptions called");
         if (imageOptionsVisible) {
+            // Ẩn các tùy chọn hình ảnh
             imageOptionsDiv.classList.add('d-none');
             solveWithImageBtn.classList.remove('bg-primary');
             solveWithImageBtn.classList.add('bg-light');
             solveWithImageBtn.classList.remove('text-white');
             solveWithImageBtn.classList.add('text-muted');
         } else {
+            // Hiện các tùy chọn hình ảnh
             imageOptionsDiv.classList.remove('d-none');
             solveWithImageBtn.classList.remove('bg-light');
             solveWithImageBtn.classList.add('bg-primary');
@@ -87,6 +90,7 @@ document.addEventListener('DOMContentLoaded', function() {
             solveWithImageBtn.classList.add('text-white');
         }
         imageOptionsVisible = !imageOptionsVisible;
+        console.log("Image options visibility:", imageOptionsVisible);
     }
     
     // Mode selection
