@@ -95,8 +95,8 @@ def call_gemini_api(prompt: str, api_key: str) -> str:
     Returns:
         The text response from the API
     """
-    # URL theo phiên bản v1
-    url = "https://generativelanguage.googleapis.com/v1/models/gemini-pro:generateContent"
+    # URL theo phiên bản v1 với model gemini-1.5-pro
+    url = "https://generativelanguage.googleapis.com/v1/models/gemini-1.5-pro:generateContent"
     headers = {
         "Content-Type": "application/json"
     }
