@@ -32,30 +32,6 @@
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav ms-auto">
                     <li class="nav-item">
-                        <button class="nav-link btn btn-sm btn-outline-light text-dark border mx-1 mode-btn active" data-mode="trợ lý">
-                            <i class="fas fa-comment-dots me-1"></i>Trợ Lý
-                        </button>
-                    </li>
-                    <li class="nav-item">
-                        <button class="nav-link btn btn-sm btn-outline-light text-dark border mx-1 mode-btn" data-mode="giải bài tập">
-                            <i class="fas fa-tasks me-1"></i>Giải Bài Tập
-                        </button>
-                    </li>
-                    <li class="nav-item dropdown">
-                        <button class="nav-link btn btn-sm btn-outline-light text-dark border mx-1 dropdown-toggle" 
-                                data-bs-toggle="dropdown" id="subjectDropdown">
-                            <i class="fas fa-book me-1"></i>Môn Học
-                        </button>
-                        <ul class="dropdown-menu dropdown-menu-end">
-                            {% for subject in subjects %}
-                            <li>
-                                <button class="dropdown-item subject-btn {% if loop.first %}active{% endif %}" 
-                                        data-subject="{{ subject }}">{{ subject }}</button>
-                            </li>
-                            {% endfor %}
-                        </ul>
-                    </li>
-                    <li class="nav-item">
                         <button id="clearHistoryBtn" class="nav-link btn btn-sm btn-outline-danger mx-1">
                             <i class="fas fa-trash-alt me-1"></i>Xóa
                         </button>
@@ -91,7 +67,7 @@
                                     <i class="fas fa-robot"></i>
                                 </div>
                                 <div class="message-text">
-                                    <p>Xin chào! Tôi là trợ lý học tập AI. Tôi có thể giúp bạn học tập, trả lời câu hỏi hoặc giải bài tập. Hãy chọn môn học và đặt câu hỏi cho tôi!</p>
+                                    <p>Xin chào! Tôi là trợ lý học tập AI. Tôi có thể giúp bạn học tập và trả lời câu hỏi của bạn. Hãy đặt câu hỏi ngay nhé!</p>
                                 </div>
                             </div>
                         </div>
@@ -103,65 +79,18 @@
                     <div class="card-footer bg-light">
                         <form id="messageForm">
                             <div class="position-relative mb-2">
-                                <button type="button" id="solveWithImageBtn" class="btn btn-sm input-hint bg-light text-muted px-2 py-1 small rounded-pill position-absolute" style="bottom: 8px; left: 8px; z-index: 3; cursor: pointer; border: 1px solid #ddd;">
-                                    <i class="fas fa-lightbulb me-1"></i>Giải bài tập bằng ảnh
-                                </button>
                                 <textarea id="messageInput" class="form-control" 
-                                        placeholder="Nhập câu hỏi hoặc bài tập cần giải ở đây..." 
+                                        placeholder="Nhập câu hỏi của bạn ở đây..." 
                                         rows="3"></textarea>
                             </div>
-                            <div class="d-flex justify-content-between align-items-center">
-                                <!-- Tùy chọn ảnh - mặc định ẩn -->
-                                <div id="imageOptions" class="image-options d-none">
-                                    <button id="uploadImageBtn" class="btn btn-outline-secondary btn-sm me-2" type="button">
-                                        <i class="fas fa-image me-1"></i>Tải ảnh
-                                    </button>
-                                    <button id="takePictureBtn" class="btn btn-outline-info btn-sm" type="button">
-                                        <i class="fas fa-camera me-1"></i>Chụp ảnh
-                                    </button>
-                                </div>
-                                <div class="d-flex align-items-center ms-auto">
+                            <div class="d-flex justify-content-end align-items-center">
+                                <div class="d-flex align-items-center">
                                     <button id="sendButton" class="btn btn-primary" type="submit">
                                         <i class="fas fa-paper-plane me-1"></i>Gửi
                                     </button>
                                 </div>
                             </div>
                         </form>
-                        <!-- Hidden file input for image upload -->
-                        <input type="file" id="imageFileInput" accept="image/*" style="display: none;">
-                        <!-- Hidden form for image upload -->
-                        <form id="imageUploadForm" style="display: none;">
-                            <input type="hidden" name="image_data" id="imageDataInput">
-                            <input type="hidden" name="subject" id="imageSubjectInput">
-                        </form>
-                    </div>
-
-                    <!-- Camera Modal -->
-                    <div class="modal fade" id="cameraModal" tabindex="-1" aria-hidden="true">
-                        <div class="modal-dialog modal-lg">
-                            <div class="modal-content">
-                                <div class="modal-header">
-                                    <h5 class="modal-title">Chụp ảnh bài tập</h5>
-                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                                </div>
-                                <div class="modal-body">
-                                    <div class="camera-container">
-                                        <video id="cameraPreview" style="width: 100%; display: none;"></video>
-                                        <canvas id="cameraCanvas" style="width: 100%; display: none;"></canvas>
-                                        <div id="cameraPlaceholder" class="text-center p-5 border rounded mb-3">
-                                            <i class="fas fa-camera fa-3x mb-3"></i>
-                                            <p>Nhấn "Bắt đầu camera" để chụp ảnh bài tập</p>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="modal-footer">
-                                    <button type="button" id="startCameraBtn" class="btn btn-primary">Bắt đầu camera</button>
-                                    <button type="button" id="capturePictureBtn" class="btn btn-success" disabled>Chụp ảnh</button>
-                                    <button type="button" id="retakePictureBtn" class="btn btn-secondary" disabled>Chụp lại</button>
-                                    <button type="button" id="sendPictureBtn" class="btn btn-primary" disabled>Gửi ảnh</button>
-                                </div>
-                            </div>
-                        </div>
                     </div>
                 </div>
             </div>

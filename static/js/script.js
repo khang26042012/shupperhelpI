@@ -6,102 +6,25 @@ document.addEventListener('DOMContentLoaded', function() {
     const sendButton = document.getElementById('sendButton');
     const loadingOverlay = document.getElementById('loadingOverlay');
     const clearHistoryBtn = document.getElementById('clearHistoryBtn');
-    const modeButtons = document.querySelectorAll('.mode-btn');
-    const subjectButtons = document.querySelectorAll('.subject-btn');
-    const currentModeDisplay = document.getElementById('currentModeDisplay');
-    const currentSubjectDisplay = document.getElementById('currentSubjectDisplay');
     
-    // Solve with image elements
-    const solveWithImageBtn = document.getElementById('solveWithImageBtn');
-    const imageOptionsDiv = document.getElementById('imageOptions');
+    // Không còn sử dụng các biến cũ liên quan đến hình ảnh và camera
     
-    // Image upload elements
-    const uploadImageBtn = document.getElementById('uploadImageBtn');
-    const imageFileInput = document.getElementById('imageFileInput');
-    const imageUploadForm = document.getElementById('imageUploadForm');
-    const imageDataInput = document.getElementById('imageDataInput');
-    const imageSubjectInput = document.getElementById('imageSubjectInput');
-    
-    // Camera elements
-    const takePictureBtn = document.getElementById('takePictureBtn');
-    const cameraModalEl = document.getElementById('cameraModal');
-    let cameraModal = null;
-    if (cameraModalEl) {
-        try {
-            cameraModal = new bootstrap.Modal(cameraModalEl);
-            console.log("Camera modal initialized successfully");
-        } catch (e) {
-            console.error("Error initializing camera modal:", e);
-        }
-    } else {
-        console.error("Camera modal element not found");
-    }
-    const startCameraBtn = document.getElementById('startCameraBtn');
-    const capturePictureBtn = document.getElementById('capturePictureBtn');
-    const retakePictureBtn = document.getElementById('retakePictureBtn');
-    const sendPictureBtn = document.getElementById('sendPictureBtn');
-    const cameraPreview = document.getElementById('cameraPreview');
-    const cameraCanvas = document.getElementById('cameraCanvas');
-    const cameraPlaceholder = document.getElementById('cameraPlaceholder');
-    
-    // Camera variables
-    let stream = null;
-    let capturedImage = null;
-    
-    // State variables
-    let currentMode = 'trợ lý'; // Default mode
-    let currentSubject = 'Toán học'; // Default subject
-    let imageOptionsVisible = false;
+    // Không còn sử dụng các biến môn học và chế độ
     
     // Initialize the chat area with any existing messages
     initializeChat();
     
-    // Event listeners
+    // Event listeners chính
     messageForm.addEventListener('submit', sendMessage);
     clearHistoryBtn.addEventListener('click', clearChatHistory);
     
-    // Solve with image button
-    solveWithImageBtn.addEventListener('click', toggleImageOptions);
-    
-    // Image upload event listeners
-    uploadImageBtn.addEventListener('click', () => imageFileInput.click());
-    imageFileInput.addEventListener('change', handleImageUpload);
-    
-    // Camera event listeners
-    takePictureBtn.addEventListener('click', () => {
-        // Show camera modal safely
-        if (cameraModal && typeof cameraModal.show === 'function') {
-            cameraModal.show();
-        } else if (cameraModalEl) {
-            // Alternative approach if the modal object isn't working
-            try {
-                const newModal = new bootstrap.Modal(cameraModalEl);
-                newModal.show();
-                // Update the reference
-                cameraModal = newModal;
-                console.log("Created new modal instance");
-            } catch (e) {
-                console.error("Không thể mở modal camera:", e);
-                addErrorMessage("Không thể mở camera. Vui lòng thử lại sau.");
-            }
-        } else {
-            console.error("Camera modal element not found");
-            addErrorMessage("Không thể tìm thấy modal camera.");
+    // Allow pressing Enter to send message (Shift+Enter for new line)
+    messageInput.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            sendMessage(e);
         }
     });
-    
-    startCameraBtn.addEventListener('click', startCamera);
-    capturePictureBtn.addEventListener('click', captureImage);
-    retakePictureBtn.addEventListener('click', retakeImage);
-    sendPictureBtn.addEventListener('click', sendCapturedImage);
-    
-    // When camera modal is closed, stop the camera
-    if (cameraModalEl) {
-        cameraModalEl.addEventListener('hidden.bs.modal', function() {
-            stopCamera();
-            console.log("Camera stopped due to modal closing");
-        });
-    }
     
     /**
      * Toggle visibility of image options
@@ -189,9 +112,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({
-                    message: message,
-                    subject: currentSubject,
-                    mode: currentMode
+                    message: message
                 })
             });
             
