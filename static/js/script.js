@@ -69,7 +69,25 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Camera event listeners
     takePictureBtn.addEventListener('click', () => {
-        cameraModal.show();
+        // Show camera modal safely
+        if (cameraModal && typeof cameraModal.show === 'function') {
+            cameraModal.show();
+        } else if (cameraModalEl) {
+            // Alternative approach if the modal object isn't working
+            try {
+                const newModal = new bootstrap.Modal(cameraModalEl);
+                newModal.show();
+                // Update the reference
+                cameraModal = newModal;
+                console.log("Created new modal instance");
+            } catch (e) {
+                console.error("Không thể mở modal camera:", e);
+                addErrorMessage("Không thể mở camera. Vui lòng thử lại sau.");
+            }
+        } else {
+            console.error("Camera modal element not found");
+            addErrorMessage("Không thể tìm thấy modal camera.");
+        }
     });
     
     startCameraBtn.addEventListener('click', startCamera);
@@ -503,11 +521,17 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         
         try {
-            // Hide camera modal
-            cameraModal.hide();
+            // Hide camera modal safely
+            if (cameraModal && typeof cameraModal.hide === 'function') {
+                cameraModal.hide();
+            } else if (cameraModalEl) {
+                // Fallback method if modal object isn't working properly
+                const bsModal = bootstrap.Modal.getInstance(cameraModalEl);
+                if (bsModal) bsModal.hide();
+            }
             
             // Show loading overlay
-            loadingOverlay.classList.remove('d-none');
+            if (loadingOverlay) loadingOverlay.classList.remove('d-none');
             
             // Set image data in hidden form
             imageDataInput.value = capturedImage;

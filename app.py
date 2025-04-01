@@ -149,11 +149,19 @@ def upload_image():
                 image_data = request.form['image_data']
                 if image_data.startswith('data:image'):
                     # Remove the data URL prefix
-                    image_data = image_data.split(',')[1]
+                    try:
+                        image_data = image_data.split(',')[1]
+                    except IndexError:
+                        logger.error(f"Invalid image data format: {image_data[:30]}...")
+                        return jsonify({"error": "Định dạng dữ liệu hình ảnh không hợp lệ"}), 400
                 
-                # Decode base64 image
-                image_bytes = base64.b64decode(image_data)
-                image = Image.open(io.BytesIO(image_bytes))
+                try:
+                    # Decode base64 image
+                    image_bytes = base64.b64decode(image_data)
+                    image = Image.open(io.BytesIO(image_bytes))
+                except Exception as decode_error:
+                    logger.error(f"Error decoding image data: {str(decode_error)}")
+                    return jsonify({"error": "Không thể giải mã dữ liệu hình ảnh"}), 400
                 
                 # Generate unique filename
                 filename = f"camera_{subject}_{os.urandom(8).hex()}.jpg"
