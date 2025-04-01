@@ -24,7 +24,18 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Camera elements
     const takePictureBtn = document.getElementById('takePictureBtn');
-    const cameraModal = new bootstrap.Modal(document.getElementById('cameraModal'));
+    const cameraModalEl = document.getElementById('cameraModal');
+    let cameraModal = null;
+    if (cameraModalEl) {
+        try {
+            cameraModal = new bootstrap.Modal(cameraModalEl);
+            console.log("Camera modal initialized successfully");
+        } catch (e) {
+            console.error("Error initializing camera modal:", e);
+        }
+    } else {
+        console.error("Camera modal element not found");
+    }
     const startCameraBtn = document.getElementById('startCameraBtn');
     const capturePictureBtn = document.getElementById('capturePictureBtn');
     const retakePictureBtn = document.getElementById('retakePictureBtn');
@@ -67,12 +78,20 @@ document.addEventListener('DOMContentLoaded', function() {
     sendPictureBtn.addEventListener('click', sendCapturedImage);
     
     // When camera modal is closed, stop the camera
-    document.getElementById('cameraModal').addEventListener('hidden.bs.modal', stopCamera);
+    if (cameraModalEl) {
+        cameraModalEl.addEventListener('hidden.bs.modal', function() {
+            stopCamera();
+            console.log("Camera stopped due to modal closing");
+        });
+    }
     
     /**
      * Toggle visibility of image options
      */
-    function toggleImageOptions() {
+    function toggleImageOptions(e) {
+        // Ngăn form submit nếu nút nằm trong form
+        if (e) e.preventDefault();
+        
         console.log("toggleImageOptions called");
         if (imageOptionsVisible) {
             // Ẩn các tùy chọn hình ảnh
@@ -211,8 +230,8 @@ document.addEventListener('DOMContentLoaded', function() {
                             ${formatMessage(explanation)}
                         </div>
                     </div>
-                    <button class="btn btn-sm btn-outline-primary mt-2 toggle-explanation">
-                        <i class="fas fa-lightbulb mr-1"></i> Xem giải thích
+                    <button type="button" class="btn btn-sm btn-outline-primary mt-2 toggle-explanation">
+                        <i class="fas fa-lightbulb me-1"></i> Xem giải thích
                     </button>
                 `;
             }
@@ -243,8 +262,8 @@ document.addEventListener('DOMContentLoaded', function() {
                         const isVisible = explanationDiv.style.display !== 'none';
                         explanationDiv.style.display = isVisible ? 'none' : 'block';
                         this.innerHTML = isVisible 
-                            ? '<i class="fas fa-lightbulb mr-1"></i> Xem giải thích'
-                            : '<i class="fas fa-times mr-1"></i> Ẩn giải thích';
+                            ? '<i class="fas fa-lightbulb me-1"></i> Xem giải thích'
+                            : '<i class="fas fa-times me-1"></i> Ẩn giải thích';
                     }
                 });
             }
@@ -391,19 +410,8 @@ document.addEventListener('DOMContentLoaded', function() {
      */
     async function startCamera() {
         try {
-            // Đóng modal camera trước khi bắt đầu
-            cameraModal.modal._element.addEventListener('hidden.bs.modal', function (e) {
-                stopCamera();
-                cameraCanvas.style.display = 'none';
-                cameraPreview.style.display = 'none';
-                cameraPlaceholder.style.display = 'block';
-                
-                // Reset buttons
-                startCameraBtn.disabled = false;
-                capturePictureBtn.disabled = true;
-                retakePictureBtn.disabled = true;
-                sendPictureBtn.disabled = true;
-            });
+            // Log thông tin về cameraModal để debug
+            console.log("cameraModal:", cameraModal);
             
             // Request camera access
             stream = await navigator.mediaDevices.getUserMedia({ 
