@@ -14,6 +14,26 @@ GREETING_MESSAGES = [
     "Xin chào! Tôi sẵn sàng hỗ trợ bạn trong việc học tập."
 ]
 
+# Danh sách tên các loại AI
+AI_TYPES = """
+Các loại AI theo mức độ phát triển:
+1. AI hẹp (Narrow/Weak AI)
+2. AI tổng quát (General AI)
+3. AI siêu việt (Superintelligent AI)
+
+Các loại AI theo phương pháp học:
+1. Machine Learning (Học máy)
+2. Deep Learning (Học sâu)
+3. Reinforcement Learning (Học tăng cường)
+
+Các loại AI theo ứng dụng:
+1. Computer Vision (Thị giác máy tính)
+2. Natural Language Processing (Xử lý ngôn ngữ tự nhiên)
+3. Robotics (Robot học)
+4. Expert Systems (Hệ thống chuyên gia)
+5. Speech Recognition (Nhận dạng giọng nói)
+"""
+
 # Câu trả lời mẫu cho các môn học
 SUBJECT_RESPONSES = {
     "Toán học": [
@@ -94,6 +114,10 @@ def get_ai_response(prompt: str, context: Optional[str] = None) -> str:
         if context and "Môn học:" in context:
             subject_part = context.split("Môn học:")[1].strip()
             subject = subject_part.split(",")[0].strip()
+        
+        # Check for specific questions about AI types
+        if "loại ai" in prompt.lower() or "các loại ai" in prompt.lower() or "phân loại ai" in prompt.lower():
+            return AI_TYPES
         
         # If it's a very short prompt, might be a greeting
         if len(prompt) < 10 and any(word in prompt.lower() for word in ["chào", "hi", "hello", "xin chào"]):
