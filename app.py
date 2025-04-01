@@ -3,7 +3,7 @@ import logging
 import base64
 import io
 from flask import Flask, render_template, request, jsonify, session, url_for
-from utils.huggingface_api import get_ai_response
+from utils.huggingface_api import get_ai_response, get_specialized_ai_response
 from PIL import Image
 
 # Set environment variables directly in code
@@ -66,15 +66,8 @@ def send_message():
         # Get AI response based on the subject and mode
         context = f"Môn học: {subject}, Chế độ: {mode}"
         
-        response_text = ""
-        # In problem-solving mode, construct a specific prompt
-        if mode == "giải bài tập":
-            prompt = f"Hãy giải bài tập môn {subject} sau đây mà không đưa ra giải thích nào: {user_message}"
-            response_text = get_ai_response(prompt, context)
-        else:
-            # In assistant mode, just send the message to the AI
-            prompt = f"Trả lời bằng tiếng Việt về câu hỏi liên quan đến môn {subject}: {user_message}"
-            response_text = get_ai_response(prompt, context)
+        # Sử dụng API specialized cho Google Gemini
+        response_text = get_specialized_ai_response(user_message, subject, mode)
         
         # Save to history
         if 'chat_history' not in session:
@@ -151,12 +144,11 @@ def upload_image():
         # Get image URL
         image_url = url_for('static', filename=f'uploads/{filename}')
         
-        # Analyze the image with AI
-        prompt = f"Đây là bài tập môn {subject}. Hãy giải bài tập trong ảnh này mà không đưa ra giải thích: {image_url}"
-        context = f"Môn học: {subject}, Chế độ: giải bài tập bằng ảnh"
+        # Analyze the image with AI - sử dụng API Gemini
+        prompt = f"Đây là bài tập môn {subject} trong hình ảnh có đường dẫn: {image_url}. Hãy giải bài tập trong ảnh này mà không đưa ra giải thích chi tiết. Trả lời bằng tiếng Việt."
         
-        # Get AI response
-        response_text = get_ai_response(prompt, context)
+        # Sử dụng specialized API với chế độ giải bài tập
+        response_text = get_specialized_ai_response(prompt, subject, "giải bài tập")
         
         # Store in history
         if 'chat_history' not in session:
