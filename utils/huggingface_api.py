@@ -2,6 +2,10 @@ import os
 import logging
 import requests
 from typing import Optional
+from dotenv import load_dotenv
+
+# Load environment variables
+load_dotenv()
 
 # Set up logging
 logging.basicConfig(level=logging.DEBUG)
@@ -10,8 +14,8 @@ logger = logging.getLogger(__name__)
 # Get API key from environment variable
 API_KEY = os.environ.get("HUGGINGFACE_API_KEY", "")
 
-# Default model to use
-DEFAULT_MODEL = "google/flan-t5-xxl"  # Or other Vietnamese-compatible model
+# Default model to use - changed to a model that works well with Vietnamese and is available without subscription
+DEFAULT_MODEL = "google/flan-t5-base"  # Flan-T5 base is available for free use
 
 def get_ai_response(prompt: str, context: Optional[str] = None) -> str:
     """

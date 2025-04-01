@@ -1,7 +1,14 @@
 import os
 import logging
-from flask import Flask, render_template, request, jsonify, session
+import base64
+import io
+from flask import Flask, render_template, request, jsonify, session, url_for
 from utils.huggingface_api import get_ai_response
+from PIL import Image
+from dotenv import load_dotenv
+
+# Load environment variables
+load_dotenv()
 
 # Set up logging
 logging.basicConfig(level=logging.DEBUG)
@@ -10,6 +17,11 @@ logger = logging.getLogger(__name__)
 # Create Flask app
 app = Flask(__name__)
 app.secret_key = os.environ.get("SESSION_SECRET", "default_secret_key")
+app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max upload size
+app.config['UPLOAD_FOLDER'] = os.path.join('static', 'uploads')
+
+# Create upload folder if it doesn't exist
+os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 
 # List of supported subjects
 SUBJECTS = [
@@ -25,6 +37,9 @@ SUBJECTS = [
     "Giáo dục công dân", 
     "Tin học"
 ]
+
+# Allowed file extensions for image upload
+ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
 
 @app.route('/')
 def index():
@@ -85,6 +100,90 @@ def send_message():
     except Exception as e:
         logger.error(f"Error processing message: {str(e)}")
         return jsonify({"error": f"Đã xảy ra lỗi: {str(e)}"}), 500
+
+def allowed_file(filename):
+    """Check if file has an allowed extension."""
+    return '.' in filename and \
+           filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+@app.route('/upload_image', methods=['POST'])
+def upload_image():
+    """Process an uploaded image and return AI analysis."""
+    try:
+        # Check if image exists in request
+        if 'image' not in request.files and 'image_data' not in request.form:
+            return jsonify({"error": "Không tìm thấy file ảnh"}), 400
+        
+        subject = request.form.get('subject', 'Toán học')
+        
+        # Process camera image
+        if 'image_data' in request.form:
+            # Get base64 image data
+            image_data = request.form['image_data']
+            if image_data.startswith('data:image'):
+                # Remove the data URL prefix
+                image_data = image_data.split(',')[1]
+            
+            # Decode base64 image
+            image_bytes = base64.b64decode(image_data)
+            image = Image.open(io.BytesIO(image_bytes))
+            
+            # Generate unique filename
+            filename = f"camera_{subject}_{os.urandom(8).hex()}.jpg"
+            filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+            
+            # Save the image
+            image.save(filepath)
+        else:
+            # Process uploaded file
+            file = request.files['image']
+            if file.filename == '':
+                return jsonify({"error": "Không có file nào được chọn"}), 400
+                
+            if not allowed_file(file.filename):
+                return jsonify({"error": "Loại file không được hỗ trợ"}), 400
+                
+            # Generate unique filename
+            filename = f"upload_{subject}_{os.urandom(8).hex()}.{file.filename.rsplit('.', 1)[1].lower()}"
+            filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+            
+            # Save the file
+            file.save(filepath)
+        
+        # Get image URL
+        image_url = url_for('static', filename=f'uploads/{filename}')
+        
+        # Analyze the image with AI
+        prompt = f"Đây là bài tập môn {subject}. Hãy giải bài tập trong ảnh này mà không đưa ra giải thích: {image_url}"
+        context = f"Môn học: {subject}, Chế độ: giải bài tập bằng ảnh"
+        
+        # Get AI response
+        response_text = get_ai_response(prompt, context)
+        
+        # Store in history
+        if 'chat_history' not in session:
+            session['chat_history'] = []
+        
+        session['chat_history'].append({
+            'user': f"[Hình ảnh bài tập môn {subject}]",
+            'user_image': image_url,
+            'bot': response_text,
+            'subject': subject,
+            'mode': 'giải bài tập'
+        })
+        
+        session.modified = True
+        
+        return jsonify({
+            "response": response_text,
+            "subject": subject,
+            "mode": "giải bài tập",
+            "image_url": image_url
+        })
+    
+    except Exception as e:
+        logger.error(f"Error processing image: {str(e)}")
+        return jsonify({"error": f"Đã xảy ra lỗi khi xử lý ảnh: {str(e)}"}), 500
 
 @app.route('/clear_history', methods=['POST'])
 def clear_history():
