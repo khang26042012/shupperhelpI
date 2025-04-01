@@ -102,23 +102,28 @@
                     <div class="card-footer bg-light">
                         <form id="messageForm">
                             <div class="position-relative mb-2">
-                                <div class="input-hint bg-light text-muted px-2 py-1 small rounded-pill position-absolute" style="bottom: 8px; left: 8px; z-index: 3;">
+                                <div id="solveWithImageBtn" class="input-hint bg-light text-muted px-2 py-1 small rounded-pill position-absolute" style="bottom: 8px; left: 8px; z-index: 3; cursor: pointer;">
                                     <i class="fas fa-lightbulb me-1"></i>Giải bài tập bằng ảnh
                                 </div>
                                 <textarea id="messageInput" class="form-control" 
                                         placeholder="Nhập câu hỏi hoặc bài tập cần giải ở đây..." 
                                         rows="3"></textarea>
                             </div>
-                            <div class="d-flex justify-content-end">
-                                <button id="uploadImageBtn" class="btn btn-secondary me-2" type="button">
-                                    <i class="fas fa-image me-1"></i>Tải ảnh
-                                </button>
-                                <button id="takePictureBtn" class="btn btn-info me-2" type="button">
-                                    <i class="fas fa-camera me-1"></i>Chụp ảnh
-                                </button>
-                                <button id="sendButton" class="btn btn-primary" type="submit">
-                                    <i class="fas fa-paper-plane me-1"></i>Gửi
-                                </button>
+                            <div class="d-flex justify-content-between align-items-center">
+                                <!-- Tùy chọn ảnh - mặc định ẩn -->
+                                <div id="imageOptions" class="image-options d-none">
+                                    <button id="uploadImageBtn" class="btn btn-outline-secondary btn-sm me-2" type="button">
+                                        <i class="fas fa-image me-1"></i>Tải ảnh
+                                    </button>
+                                    <button id="takePictureBtn" class="btn btn-outline-info btn-sm" type="button">
+                                        <i class="fas fa-camera me-1"></i>Chụp ảnh
+                                    </button>
+                                </div>
+                                <div class="d-flex align-items-center ms-auto">
+                                    <button id="sendButton" class="btn btn-primary" type="submit">
+                                        <i class="fas fa-paper-plane me-1"></i>Gửi
+                                    </button>
+                                </div>
                             </div>
                         </form>
                         <!-- Hidden file input for image upload -->

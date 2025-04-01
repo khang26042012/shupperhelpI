@@ -11,6 +11,10 @@ document.addEventListener('DOMContentLoaded', function() {
     const currentModeDisplay = document.getElementById('currentModeDisplay');
     const currentSubjectDisplay = document.getElementById('currentSubjectDisplay');
     
+    // Solve with image elements
+    const solveWithImageBtn = document.getElementById('solveWithImageBtn');
+    const imageOptionsDiv = document.getElementById('imageOptions');
+    
     // Image upload elements
     const uploadImageBtn = document.getElementById('uploadImageBtn');
     const imageFileInput = document.getElementById('imageFileInput');
@@ -36,6 +40,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // State variables
     let currentMode = 'trợ lý'; // Default mode
     let currentSubject = 'Toán học'; // Default subject
+    let imageOptionsVisible = false;
     
     // Initialize the chat area with any existing messages
     initializeChat();
@@ -43,6 +48,9 @@ document.addEventListener('DOMContentLoaded', function() {
     // Event listeners
     messageForm.addEventListener('submit', sendMessage);
     clearHistoryBtn.addEventListener('click', clearChatHistory);
+    
+    // Solve with image button
+    solveWithImageBtn.addEventListener('click', toggleImageOptions);
     
     // Image upload event listeners
     uploadImageBtn.addEventListener('click', () => imageFileInput.click());
@@ -60,6 +68,26 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // When camera modal is closed, stop the camera
     document.getElementById('cameraModal').addEventListener('hidden.bs.modal', stopCamera);
+    
+    /**
+     * Toggle visibility of image options
+     */
+    function toggleImageOptions() {
+        if (imageOptionsVisible) {
+            imageOptionsDiv.classList.add('d-none');
+            solveWithImageBtn.classList.remove('bg-primary');
+            solveWithImageBtn.classList.add('bg-light');
+            solveWithImageBtn.classList.remove('text-white');
+            solveWithImageBtn.classList.add('text-muted');
+        } else {
+            imageOptionsDiv.classList.remove('d-none');
+            solveWithImageBtn.classList.remove('bg-light');
+            solveWithImageBtn.classList.add('bg-primary');
+            solveWithImageBtn.classList.remove('text-muted');
+            solveWithImageBtn.classList.add('text-white');
+        }
+        imageOptionsVisible = !imageOptionsVisible;
+    }
     
     // Mode selection
     modeButtons.forEach(button => {
