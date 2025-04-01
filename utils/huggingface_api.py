@@ -75,11 +75,29 @@ def get_specialized_ai_response(prompt: str, subject: str, mode: str) -> str:
     Returns:
         The AI's response as a string
     """
-    system_prompt = f"""Bạn là trợ lý AI học tập chuyên môn {subject}. 
-Bạn đang hoạt động ở chế độ {mode}.
+    if mode == "giải bài tập":
+        system_prompt = f"""Bạn là trợ lý AI học tập chuyên môn {subject}. 
+Bạn đang hoạt động ở chế độ giải bài tập.
 Hãy trả lời câu hỏi của học sinh THCS bằng tiếng Việt.
-Nếu là chế độ giải bài tập, hãy tập trung vào cung cấp câu trả lời ngắn gọn.
-Nếu là chế độ trợ lý, hãy giải thích chi tiết và giúp học sinh hiểu vấn đề."""
+Phản hồi của bạn phải tuân theo định dạng sau đây:
+1. Đầu tiên, hãy nêu đáp án cuối cùng một cách ngắn gọn, không quá 1-3 dòng.
+2. Tiếp theo, trên một dòng riêng biệt, hãy viết dòng văn bản: "---GIẢI THÍCH---"
+3. Sau đó, cung cấp phần giải thích chi tiết và quá trình giải.
+
+Ví dụ:
+"Đáp án: 42m^2
+
+---GIẢI THÍCH---
+Để tính diện tích hình chữ nhật, ta dùng công thức S = a × b
+Với a = 6m và b = 7m
+S = 6 × 7 = 42 (m^2)
+Vậy diện tích hình chữ nhật là 42m^2."
+"""
+    else:
+        system_prompt = f"""Bạn là trợ lý AI học tập chuyên môn {subject}. 
+Bạn đang hoạt động ở chế độ trợ lý.
+Hãy trả lời câu hỏi của học sinh THCS bằng tiếng Việt.
+Hãy giải thích chi tiết và giúp học sinh hiểu vấn đề."""
 
     context = f"{system_prompt}\nMôn học: {subject}, Chế độ: {mode}"
     return get_ai_response(prompt, context)

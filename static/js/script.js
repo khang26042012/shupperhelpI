@@ -161,19 +161,63 @@ document.addEventListener('DOMContentLoaded', function() {
         
         const iconClass = sender === 'user' ? 'fas fa-user' : 'fas fa-robot';
         
+        // Kiểm tra xem có phải là phản hồi có phần giải thích không
+        let formattedText = text;
+        let explanationSection = '';
+        
+        if (sender === 'bot') {
+            const parts = text.split('---GIẢI THÍCH---');
+            if (parts.length > 1) {
+                // Có phần giải thích
+                formattedText = parts[0].trim();
+                const explanation = parts[1].trim();
+                
+                explanationSection = `
+                    <div class="explanation-section mt-2" style="display: none;">
+                        <hr>
+                        <div class="explanation-content">
+                            ${formatMessage(explanation)}
+                        </div>
+                    </div>
+                    <button class="btn btn-sm btn-outline-primary mt-2 toggle-explanation">
+                        <i class="fas fa-lightbulb mr-1"></i> Xem giải thích
+                    </button>
+                `;
+            }
+        }
+        
         messageDiv.innerHTML = `
             <div class="message-content">
                 <div class="message-avatar">
                     <i class="${iconClass}"></i>
                 </div>
                 <div class="message-text">
-                    <p>${formatMessage(text)}</p>
+                    <p>${formatMessage(formattedText)}</p>
+                    ${explanationSection}
                     <div class="message-time">${timestamp}</div>
                 </div>
             </div>
         `;
         
+        // Thêm sự kiện cho nút xem giải thích
         chatArea.appendChild(messageDiv);
+        
+        if (sender === 'bot') {
+            const toggleBtn = messageDiv.querySelector('.toggle-explanation');
+            if (toggleBtn) {
+                toggleBtn.addEventListener('click', function() {
+                    const explanationDiv = messageDiv.querySelector('.explanation-section');
+                    if (explanationDiv) {
+                        const isVisible = explanationDiv.style.display !== 'none';
+                        explanationDiv.style.display = isVisible ? 'none' : 'block';
+                        this.innerHTML = isVisible 
+                            ? '<i class="fas fa-lightbulb mr-1"></i> Xem giải thích'
+                            : '<i class="fas fa-times mr-1"></i> Ẩn giải thích';
+                    }
+                });
+            }
+        }
+        
         scrollToBottom();
     }
     
