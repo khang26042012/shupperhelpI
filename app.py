@@ -2,7 +2,7 @@ import os
 import logging
 import base64
 import io
-from flask import Flask, render_template, request, jsonify, session, url_for
+from flask import Flask, render_template, request, jsonify, session, url_for, redirect
 from dotenv import load_dotenv
 
 # Load environment variables from .env file
@@ -21,6 +21,7 @@ app = Flask(__name__)
 app.secret_key = os.environ.get("SESSION_SECRET", "default_secret_key")
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max upload size
 app.config['UPLOAD_FOLDER'] = os.path.join('static', 'uploads')
+app.config['GOOGLE_AI_API_KEY'] = os.environ.get("GOOGLE_AI_API_KEY", "")
 
 # Create upload folder if it doesn't exist
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
@@ -43,12 +44,39 @@ SUBJECTS = [
 # Allowed file extensions for image upload
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
 
+@app.route('/api_key', methods=['GET', 'POST'])
+def set_api_key():
+    """Set Google AI API key."""
+    error = None
+    success = None
+    
+    if request.method == 'POST':
+        api_key = request.form.get('api_key')
+        if api_key:
+            # Update application configuration
+            app.config['GOOGLE_AI_API_KEY'] = api_key
+            # Store in session for persistence
+            session['google_ai_api_key'] = api_key
+            success = "API key đã được lưu thành công!"
+        else:
+            error = "API key không được để trống!"
+    
+    return render_template('api_key_form.html', error=error, success=success)
+
 @app.route('/')
 def index():
     """Render the main page of the application."""
     # Initialize chat history if not present
     if 'chat_history' not in session:
         session['chat_history'] = []
+    
+    # Check if API key is set, if not redirect to set API key page
+    if not app.config['GOOGLE_AI_API_KEY'] and 'google_ai_api_key' not in session:
+        return redirect(url_for('set_api_key'))
+    
+    # Use session API key if available
+    if 'google_ai_api_key' in session:
+        app.config['GOOGLE_AI_API_KEY'] = session['google_ai_api_key']
     
     return render_template('index.html', subjects=SUBJECTS)
 

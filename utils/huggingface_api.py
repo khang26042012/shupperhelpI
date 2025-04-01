@@ -30,11 +30,24 @@ def get_ai_response(prompt: str, context: Optional[str] = None) -> str:
         if context:
             logger.debug(f"Context: {context}")
         
-        # Get API key from environment
-        api_key = os.environ.get("GOOGLE_AI_API_KEY")
+        # Get API key from Flask app config or environment
+        from flask import current_app
+        
+        # Try to get API key from app config first (preferred)
+        api_key = None
+        try:
+            api_key = current_app.config.get('GOOGLE_AI_API_KEY')
+        except:
+            # If Flask app context is not available, try from environment
+            pass
+        
+        # Fall back to environment variable
         if not api_key:
-            logger.error("API key not found in environment")
-            return "Lỗi xác thực API. Vui lòng liên hệ quản trị viên."
+            api_key = os.environ.get("GOOGLE_AI_API_KEY")
+            
+        if not api_key:
+            logger.error("API key not found in app config or environment")
+            return "Lỗi xác thực API. Vui lòng nhập API key trong trang cài đặt."
         
         # Prepare prompt with context if available
         full_prompt = prompt
@@ -82,7 +95,8 @@ def call_gemini_api(prompt: str, api_key: str) -> str:
     Returns:
         The text response from the API
     """
-    url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent"
+    # URL theo phiên bản v1
+    url = "https://generativelanguage.googleapis.com/v1/models/gemini-pro:generateContent"
     headers = {
         "Content-Type": "application/json"
     }
@@ -90,7 +104,7 @@ def call_gemini_api(prompt: str, api_key: str) -> str:
     # Add API key as query parameter
     url = f"{url}?key={api_key}"
     
-    # Prepare request payload
+    # Prepare request payload theo định dạng API v1
     payload = {
         "contents": [
             {
@@ -101,11 +115,11 @@ def call_gemini_api(prompt: str, api_key: str) -> str:
                 ]
             }
         ],
-        "generationConfig": {
+        "generation_config": {
             "temperature": 0.7,
-            "topK": 40,
-            "topP": 0.95,
-            "maxOutputTokens": 800
+            "top_k": 40,
+            "top_p": 0.95,
+            "max_output_tokens": 800
         }
     }
     
