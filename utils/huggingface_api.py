@@ -1,105 +1,109 @@
 import os
 import logging
-import requests
+import random
 from typing import Optional
-from dotenv import load_dotenv
-
-# Load environment variables
-load_dotenv()
 
 # Set up logging
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
-# Get API key from environment variable
-API_KEY = os.environ.get("HUGGINGFACE_API_KEY", "")
+# Lời chào mở đầu
+GREETING_MESSAGES = [
+    "Xin chào! Tôi là trợ lý AI học tập. Bạn cần giúp gì không?",
+    "Chào bạn! Tôi có thể giúp bạn với các bài tập và câu hỏi học tập.",
+    "Xin chào! Tôi sẵn sàng hỗ trợ bạn trong việc học tập."
+]
 
-# Default model to use - use a model that does text generation instead of classification/mask
-DEFAULT_MODEL = "gpt2"  # Widely accessible for free API use
+# Câu trả lời mẫu cho các môn học
+SUBJECT_RESPONSES = {
+    "Toán học": [
+        "Để giải bài toán này, bạn cần áp dụng công thức...",
+        "Đây là một bài toán về hình học không gian. Trước tiên, chúng ta cần xác định...",
+        "Bài tập này thuộc phần đại số. Cách giải như sau..."
+    ],
+    "Ngữ văn": [
+        "Tác phẩm này thuộc thể loại truyện ngắn, được sáng tác vào thời kỳ...",
+        "Nhân vật chính trong tác phẩm này có đặc điểm...",
+        "Phân tích đoạn văn này, ta thấy tác giả sử dụng nhiều biện pháp tu từ như..."
+    ],
+    "Tiếng Anh": [
+        "Cấu trúc ngữ pháp này được sử dụng để diễn tả...",
+        "Đây là một phrasal verb, có nghĩa là...",
+        "Để viết một email formal, bạn nên sử dụng những cụm từ như..."
+    ],
+    "Vật lý": [
+        "Hiện tượng này được giải thích bởi định luật...",
+        "Để tính được lực tác dụng, ta áp dụng công thức...",
+        "Bài toán này liên quan đến chuyển động của vật. Ta có thể giải như sau..."
+    ],
+    "Hóa học": [
+        "Phản ứng này thuộc loại phản ứng oxi hóa khử...",
+        "Để cân bằng phương trình hóa học này, ta thực hiện các bước sau...",
+        "Hợp chất này có cấu tạo phân tử gồm..."
+    ],
+    "Sinh học": [
+        "Quá trình trao đổi chất này diễn ra ở bào quan...",
+        "Cấu trúc của tế bào gồm các thành phần chính là...",
+        "Đặc điểm phân loại của sinh vật này là..."
+    ],
+    "Lịch sử": [
+        "Sự kiện này diễn ra vào thời kỳ...",
+        "Nhân vật lịch sử này có đóng góp quan trọng là...",
+        "Cuộc cách mạng này có ảnh hưởng sâu rộng đến..."
+    ],
+    "Địa lý": [
+        "Vùng địa lý này có đặc điểm khí hậu...",
+        "Dân cư ở khu vực này chủ yếu sống bằng nghề...",
+        "Đây là vùng núi được hình thành do quá trình..."
+    ],
+    "Công nghệ": [
+        "Quy trình sản xuất sản phẩm này gồm các bước...",
+        "Nguyên lý hoạt động của thiết bị này dựa trên...",
+        "Khi lập trình, ta cần lưu ý các cấu trúc điều khiển như..."
+    ],
+    "Giáo dục công dân": [
+        "Quyền và nghĩa vụ công dân được quy định trong Hiến pháp bao gồm...",
+        "Đạo đức xã hội được thể hiện qua các chuẩn mực như...",
+        "Khi giải quyết tình huống này, cần căn cứ vào pháp luật về..."
+    ],
+    "Tin học": [
+        "Thuật toán này có độ phức tạp là...",
+        "Để thiết kế cơ sở dữ liệu, ta cần phân tích các thực thể và mối quan hệ...",
+        "Ngôn ngữ lập trình này có các cấu trúc điều khiển như..."
+    ]
+}
 
 def get_ai_response(prompt: str, context: Optional[str] = None) -> str:
     """
-    Get a response from the Hugging Face API.
+    Get a simulated AI response without using Hugging Face API.
     
     Args:
         prompt: The user's message/query
         context: Optional context like subject and mode
         
     Returns:
-        The AI's response as a string
+        A simulated AI response
     """
     try:
-        # Fake response for testing when API is not working
-        # Convert token to include hf_ prefix if not already present
-        api_key = API_KEY
-        if api_key and not api_key.startswith("hf_"):
-            api_key = f"hf_{api_key}"
-            
-        # Check if API key exists
-        if not api_key:
-            logger.warning("No Hugging Face API key found. Using fallback.")
-            return "Xin lỗi, không thể kết nối với trợ lý AI. Vui lòng kiểm tra cài đặt API."
-        
-        # Prepare the API request
-        api_url = f"https://api-inference.huggingface.co/models/{DEFAULT_MODEL}"
-        
-        # Format prompt with context if available
-        full_prompt = prompt
+        logger.debug(f"Received prompt: {prompt}")
         if context:
-            full_prompt = f"{context}\n\n{prompt}"
-            
-        headers = {
-            "Authorization": f"Bearer {api_key}",
-            "Content-Type": "application/json"
-        }
+            logger.debug(f"Context: {context}")
         
-        # For text-generation API
-        if "flan" in DEFAULT_MODEL or "gpt" in DEFAULT_MODEL or "llama" in DEFAULT_MODEL:
-            payload = {
-                "inputs": full_prompt,
-                "parameters": {
-                    "max_length": 1024,
-                    "temperature": 0.7,
-                    "top_p": 0.9,
-                    "do_sample": True
-                },
-                "options": {
-                    "wait_for_model": True
-                }
-            }
-        else:
-            # For fill-mask or text-classification models
-            payload = {
-                "inputs": full_prompt
-            }
-            
-        # Log the details for debugging
-        logger.debug(f"Using API key: {api_key[:5]}...{api_key[-5:]}")
-        logger.debug(f"Sending request to Hugging Face API: {api_url}")
+        # Extract subject from context if available
+        subject = "Toán học"  # Default subject
+        if context and "Môn học:" in context:
+            subject_part = context.split("Môn học:")[1].strip()
+            subject = subject_part.split(",")[0].strip()
         
-        # Make API request
-        response = requests.post(api_url, headers=headers, json=payload)
-        response.raise_for_status()
+        # If it's a very short prompt, might be a greeting
+        if len(prompt) < 10 and any(word in prompt.lower() for word in ["chào", "hi", "hello", "xin chào"]):
+            return random.choice(GREETING_MESSAGES)
         
-        # Parse the response
-        result = response.json()
-        logger.debug(f"API Response: {result}")
+        # Get responses for the subject
+        responses = SUBJECT_RESPONSES.get(subject, SUBJECT_RESPONSES["Toán học"])
         
-        # Extract generated text based on model type
-        if isinstance(result, list) and len(result) > 0:
-            # Text generation models
-            if isinstance(result[0], dict) and "generated_text" in result[0]:
-                return result[0]["generated_text"]
-            # Fill-mask models
-            elif isinstance(result[0], dict) and "sequence" in result[0]:
-                return result[0]["sequence"]
-                
-        # Fallback when response format is different
-        return str(result)
-    
-    except requests.exceptions.RequestException as e:
-        logger.error(f"Error making request to Hugging Face API: {str(e)}")
-        return f"Lỗi kết nối với trợ lý AI: {str(e)}"
+        # Return a random response from the subject
+        return random.choice(responses)
     
     except Exception as e:
         logger.error(f"Error in get_ai_response: {str(e)}")

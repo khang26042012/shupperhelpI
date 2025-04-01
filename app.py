@@ -5,10 +5,8 @@ import io
 from flask import Flask, render_template, request, jsonify, session, url_for
 from utils.huggingface_api import get_ai_response
 from PIL import Image
-from dotenv import load_dotenv
 
-# Load environment variables
-load_dotenv()
+# Set environment variables directly in code
 
 # Set up logging
 logging.basicConfig(level=logging.DEBUG)
