@@ -14,8 +14,8 @@ logger = logging.getLogger(__name__)
 # Get API key from environment variable
 API_KEY = os.environ.get("HUGGINGFACE_API_KEY", "")
 
-# Default model to use - changed to a model that works well with Vietnamese and is available without subscription
-DEFAULT_MODEL = "google/flan-t5-base"  # Flan-T5 base is available for free use
+# Default model to use - use a model that does text generation instead of classification/mask
+DEFAULT_MODEL = "gpt2"  # Widely accessible for free API use
 
 def get_ai_response(prompt: str, context: Optional[str] = None) -> str:
     """
@@ -29,8 +29,14 @@ def get_ai_response(prompt: str, context: Optional[str] = None) -> str:
         The AI's response as a string
     """
     try:
+        # Fake response for testing when API is not working
+        # Convert token to include hf_ prefix if not already present
+        api_key = API_KEY
+        if api_key and not api_key.startswith("hf_"):
+            api_key = f"hf_{api_key}"
+            
         # Check if API key exists
-        if not API_KEY:
+        if not api_key:
             logger.warning("No Hugging Face API key found. Using fallback.")
             return "Xin lỗi, không thể kết nối với trợ lý AI. Vui lòng kiểm tra cài đặt API."
         
@@ -43,37 +49,51 @@ def get_ai_response(prompt: str, context: Optional[str] = None) -> str:
             full_prompt = f"{context}\n\n{prompt}"
             
         headers = {
-            "Authorization": f"Bearer {API_KEY}",
+            "Authorization": f"Bearer {api_key}",
             "Content-Type": "application/json"
         }
         
-        payload = {
-            "inputs": full_prompt,
-            "parameters": {
-                "max_length": 1024,
-                "temperature": 0.7,
-                "top_p": 0.9,
-                "do_sample": True
-            },
-            "options": {
-                "wait_for_model": True
+        # For text-generation API
+        if "flan" in DEFAULT_MODEL or "gpt" in DEFAULT_MODEL or "llama" in DEFAULT_MODEL:
+            payload = {
+                "inputs": full_prompt,
+                "parameters": {
+                    "max_length": 1024,
+                    "temperature": 0.7,
+                    "top_p": 0.9,
+                    "do_sample": True
+                },
+                "options": {
+                    "wait_for_model": True
+                }
             }
-        }
+        else:
+            # For fill-mask or text-classification models
+            payload = {
+                "inputs": full_prompt
+            }
+            
+        # Log the details for debugging
+        logger.debug(f"Using API key: {api_key[:5]}...{api_key[-5:]}")
+        logger.debug(f"Sending request to Hugging Face API: {api_url}")
         
         # Make API request
-        logger.debug(f"Sending request to Hugging Face API: {api_url}")
         response = requests.post(api_url, headers=headers, json=payload)
         response.raise_for_status()
         
         # Parse the response
         result = response.json()
+        logger.debug(f"API Response: {result}")
         
-        # Extract generated text
+        # Extract generated text based on model type
         if isinstance(result, list) and len(result) > 0:
-            # Different models have different response formats
+            # Text generation models
             if isinstance(result[0], dict) and "generated_text" in result[0]:
                 return result[0]["generated_text"]
-            
+            # Fill-mask models
+            elif isinstance(result[0], dict) and "sequence" in result[0]:
+                return result[0]["sequence"]
+                
         # Fallback when response format is different
         return str(result)
     
