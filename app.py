@@ -3,6 +3,10 @@ import logging
 import base64
 import io
 from flask import Flask, render_template, request, jsonify, session, url_for
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv()
 from utils.huggingface_api import get_ai_response, get_specialized_ai_response
 from PIL import Image
 
