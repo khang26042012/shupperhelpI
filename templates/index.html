@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trợ Lý Ảo Học Tập AI</title>
+    
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    
+    <!-- Favicon -->
+    <link rel="icon" href="{{ url_for('static', filename='images/favicon.svg') }}" type="image/svg+xml">
+</head>
+<body>
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm">
+        <div class="container">
+            <a class="navbar-brand fw-bold text-primary" href="/">
+                <i class="fas fa-robot me-2"></i>Trợ Lý Học Tập AI
+            </a>
+            
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <button class="nav-link btn btn-sm btn-outline-light text-dark border mx-1 mode-btn active" data-mode="trợ lý">
+                            <i class="fas fa-comment-dots me-1"></i>Trợ Lý
+                        </button>
+                    </li>
+                    <li class="nav-item">
+                        <button class="nav-link btn btn-sm btn-outline-light text-dark border mx-1 mode-btn" data-mode="giải bài tập">
+                            <i class="fas fa-tasks me-1"></i>Giải Bài Tập
+                        </button>
+                    </li>
+                    <li class="nav-item dropdown">
+                        <button class="nav-link btn btn-sm btn-outline-light text-dark border mx-1 dropdown-toggle" 
+                                data-bs-toggle="dropdown" id="subjectDropdown">
+                            <i class="fas fa-book me-1"></i>Môn Học
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            {% for subject in subjects %}
+                            <li>
+                                <button class="dropdown-item subject-btn {% if loop.first %}active{% endif %}" 
+                                        data-subject="{{ subject }}">{{ subject }}</button>
+                            </li>
+                            {% endfor %}
+                        </ul>
+                    </li>
+                    <li class="nav-item">
+                        <button id="clearHistoryBtn" class="nav-link btn btn-sm btn-outline-danger mx-1">
+                            <i class="fas fa-trash-alt me-1"></i>Xóa
+                        </button>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="container my-3">
+        <div class="row">
+            <div class="col-md-12">
+                <!-- Chat Area -->
+                <div class="card shadow-sm">
+                    <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                        <div>
+                            <i class="fas fa-comment-alt me-2"></i>
+                            <span id="currentModeDisplay">Trợ Lý</span> - 
+                            <span id="currentSubjectDisplay">Toán học</span>
+                        </div>
+                        <div>
+                            <small class="fw-light">Trợ lý ảo học tập sử dụng AI</small>
+                        </div>
+                    </div>
+                    
+                    <div class="card-body chat-area" id="chatArea">
+                        <!-- Welcome Message -->
+                        <div class="chat-message bot-message">
+                            <div class="message-content">
+                                <div class="message-avatar">
+                                    <i class="fas fa-robot"></i>
+                                </div>
+                                <div class="message-text">
+                                    <p>Xin chào! Tôi là trợ lý học tập AI. Tôi có thể giúp bạn học tập, trả lời câu hỏi hoặc giải bài tập. Hãy chọn môn học và đặt câu hỏi cho tôi!</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Chat messages will be appended here -->
+                    </div>
+                    
+                    <!-- Message Input Area -->
+                    <div class="card-footer bg-light">
+                        <form id="messageForm">
+                            <div class="input-group">
+                                <textarea id="messageInput" class="form-control" 
+                                         placeholder="Nhập câu hỏi hoặc bài tập cần giải ở đây..." 
+                                         rows="3"></textarea>
+                                <button id="sendButton" class="btn btn-primary" type="submit">
+                                    <i class="fas fa-paper-plane me-1"></i>Gửi
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="bg-dark text-white text-center py-3 mt-5">
+        <div class="container">
+            <p class="mb-0">by: Phan Trọng Khang 7¹ | Trường THCS Vĩnh hòa</p>
+        </div>
+    </footer>
+
+    <!-- Loading Overlay -->
+    <div id="loadingOverlay" class="d-none">
+        <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Đang tải...</span>
+        </div>
+        <p class="mt-2 text-white">Đang tải câu trả lời...</p>
+    </div>
+
+    <!-- Bootstrap 5 JS Bundle -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Custom JavaScript -->
+    <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+</body>
+</html>
