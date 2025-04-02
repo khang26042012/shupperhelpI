@@ -39,10 +39,7 @@ body {
     border-color: var(--primary-color);
 }
 
-#historyBtn.showing-all {
-    background-color: var(--primary-color);
-    color: white !important;
-    border-color: var(--primary-color);
+
 }
 
 .card {
