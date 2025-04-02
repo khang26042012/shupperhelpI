@@ -6,6 +6,25 @@ document.addEventListener('DOMContentLoaded', function() {
     const sendButton = document.getElementById('sendButton');
     const loadingOverlay = document.getElementById('loadingOverlay');
     const clearHistoryBtn = document.getElementById('clearHistoryBtn');
+    const historyBtn = document.getElementById('historyBtn');
+    
+    historyBtn.addEventListener('click', function() {
+        // Kiểm tra trạng thái đang hiển thị của lịch sử
+        const historyMessages = document.querySelectorAll('.chat-message');
+        const isShowingAll = !historyBtn.classList.contains('showing-all');
+        
+        if (isShowingAll) {
+            // Hiển thị tất cả tin nhắn
+            historyMessages.forEach(msg => msg.style.display = 'block');
+            historyBtn.classList.add('showing-all');
+            historyBtn.innerHTML = '<i class="fas fa-times me-1"></i>Ẩn lịch sử';
+        } else {
+            // Chỉ hiển thị 5 tin nhắn gần nhất
+            Array.from(historyMessages).slice(0, -5).forEach(msg => msg.style.display = 'none');
+            historyBtn.classList.remove('showing-all');
+            historyBtn.innerHTML = '<i class="fas fa-history me-1"></i>Lịch sử';
+        }
+    });
     
     // Không còn sử dụng các biến cũ liên quan đến hình ảnh và camera
     
