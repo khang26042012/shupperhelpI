@@ -1,4 +1,3 @@
-
 document.addEventListener('DOMContentLoaded', function() {
     // DOM Elements
     const chatArea = document.getElementById('chatArea');
@@ -22,26 +21,17 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    /**
-     * Handle message submission
-     */
     async function handleMessageSubmit(e) {
         e.preventDefault();
 
         const message = messageInput.value.trim();
         if (!message) return;
 
-        // Display user message
         addMessage(message, 'user');
-
-        // Clear input
         messageInput.value = '';
-
-        // Show loading overlay
         loadingOverlay.classList.remove('d-none');
 
         try {
-            // Send to server
             const response = await fetch('/send_message', {
                 method: 'POST',
                 headers: {
@@ -55,31 +45,38 @@ document.addEventListener('DOMContentLoaded', function() {
             const data = await response.json();
 
             if (response.ok) {
-                // Display bot response
-                addMessage(data.response, 'bot');
-                // Render math after adding message
+                let formattedResponse = data.response;
+                // Xử lý các bước giải toán
+                formattedResponse = formattedResponse.replace(/\*\*"([^"]+)"\*\*/g, (_, content) => {
+                    return `<strong>${content}</strong>`;
+                });
+
+                // Định dạng công thức toán học
+                formattedResponse = formattedResponse.replace(/\$\$(.*?)\$\$/g, (_, formula) => {
+                    return `\\[${formula}\\]`;
+                });
+                formattedResponse = formattedResponse.replace(/\$(.*?)\$/g, (_, formula) => {
+                    return `\\(${formula}\\)`;
+                });
+
+                addMessage(formattedResponse, 'bot');
+
                 if (window.MathJax) {
                     MathJax.typesetPromise();
                 }
             } else {
-                // Display error
                 const errorMsg = data.error || 'Đã xảy ra lỗi khi gửi tin nhắn.';
                 addErrorMessage(errorMsg);
             }
         } catch (error) {
-            console.error('Error sending message:', error);
+            console.error('Error:', error);
             addErrorMessage('Không thể kết nối với máy chủ. Vui lòng thử lại sau.');
         } finally {
-            // Hide loading overlay
             loadingOverlay.classList.add('d-none');
-            // Scroll to bottom
             scrollToBottom();
         }
     }
 
-    /**
-     * Add a new message to the chat area
-     */
     function addMessage(text, sender) {
         const messageDiv = document.createElement('div');
         messageDiv.className = `chat-message ${sender}-message`;
@@ -90,8 +87,6 @@ document.addEventListener('DOMContentLoaded', function() {
         });
 
         const iconClass = sender === 'user' ? 'fas fa-user' : 'fas fa-robot';
-
-        // Format text and check for explanations
         let formattedText = text;
         let explanationSection = '';
 
@@ -100,7 +95,6 @@ document.addEventListener('DOMContentLoaded', function() {
             if (parts.length > 1) {
                 formattedText = parts[0].trim();
                 const explanation = parts[1].trim();
-
                 explanationSection = `
                     <div class="explanation-section mt-2" style="display: none;">
                         <hr>
@@ -114,10 +108,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 `;
             }
         }
-
-        // Wrap math expressions in proper delimiters
-        formattedText = formattedText.replace(/\$\$(.*?)\$\$/g, '\\[$1\\]');
-        formattedText = formattedText.replace(/\$(.*?)\$/g, '\\($1\\)');
 
         messageDiv.innerHTML = `
             <div class="message-content">
@@ -134,7 +124,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
         chatArea.appendChild(messageDiv);
 
-        // Add event listener for explanation toggle if present
         if (sender === 'bot') {
             const toggleBtn = messageDiv.querySelector('.toggle-explanation');
             if (toggleBtn) {
@@ -151,7 +140,6 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
 
-        // Render math expressions
         if (window.MathJax) {
             MathJax.typesetPromise();
         }
@@ -159,13 +147,9 @@ document.addEventListener('DOMContentLoaded', function() {
         scrollToBottom();
     }
 
-    /**
-     * Add an error message to the chat
-     */
     function addErrorMessage(text) {
         const messageDiv = document.createElement('div');
         messageDiv.className = 'chat-message bot-message';
-
         messageDiv.innerHTML = `
             <div class="message-content">
                 <div class="message-avatar bg-danger">
@@ -176,37 +160,24 @@ document.addEventListener('DOMContentLoaded', function() {
                 </div>
             </div>
         `;
-
         chatArea.appendChild(messageDiv);
         scrollToBottom();
     }
 
-    /**
-     * Format message text with line breaks and code formatting
-     */
     function formatMessage(text) {
         return text
             .replace(/\n/g, '<br>')
             .replace(/```([\s\S]*?)```/g, '<pre>$1</pre>');
     }
 
-    /**
-     * Scroll chat area to the bottom
-     */
     function scrollToBottom() {
         chatArea.scrollTop = chatArea.scrollHeight;
     }
 
-    /**
-     * Initialize the chat area
-     */
     function initializeChat() {
         scrollToBottom();
     }
 
-    /**
-     * Clear chat history
-     */
     async function clearChatHistory() {
         try {
             const response = await fetch('/clear_history', {
@@ -219,15 +190,14 @@ document.addEventListener('DOMContentLoaded', function() {
             const data = await response.json();
 
             if (response.ok) {
-                // Clear chat area except for the welcome message
                 while (chatArea.children.length > 1) {
                     chatArea.removeChild(chatArea.lastChild);
                 }
             } else {
-                console.error('Error clearing history:', data.error);
+                console.error('Error:', data.error);
             }
         } catch (error) {
-            console.error('Error clearing history:', error);
+            console.error('Error:', error);
         }
     }
 });
