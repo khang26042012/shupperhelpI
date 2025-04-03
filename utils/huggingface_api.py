@@ -124,13 +124,21 @@ def call_gemini_api(prompt: str, api_key: str) -> str:
     # Add API key as query parameter
     url = f"{url}?key={api_key}"
     
+    # Thêm yêu cầu trả lời bằng tiếng Việt cho tất cả các trường hợp
+    vietnamese_instruction = ("Trả lời hoàn toàn bằng tiếng Việt. "
+                           "Tất cả các thuật ngữ toán học, khoa học và các giải thích phải được viết bằng tiếng Việt. "
+                           "Không sử dụng tiếng Anh trong câu trả lời. "
+                           "Đây là câu hỏi: ")
+    
+    enhanced_prompt = vietnamese_instruction + prompt
+    
     # Prepare request payload theo định dạng API v1
     payload = {
         "contents": [
             {
                 "parts": [
                     {
-                        "text": prompt
+                        "text": enhanced_prompt
                     }
                 ]
             }

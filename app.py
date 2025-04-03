@@ -22,7 +22,8 @@ app = Flask(__name__)
 app.secret_key = "your_secure_secret_key_for_sessions_123456789"
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max upload size
 app.config['UPLOAD_FOLDER'] = os.path.join('static', 'uploads')
-app.config['GOOGLE_AI_API_KEY'] = os.environ.get("GOOGLE_AI_API_KEY", "")
+# Đặt API key trực tiếp để đảm bảo hoạt động
+app.config['GOOGLE_AI_API_KEY'] = "AIzaSyBN0yBx3BRSJeuHxglNqbG4qfBor9grnKk"
 
 # Create upload folder if it doesn't exist
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
