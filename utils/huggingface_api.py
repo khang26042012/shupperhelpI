@@ -78,7 +78,9 @@ def get_specialized_ai_response(prompt: str, subject: str, mode: str) -> str:
     if mode == "giải bài tập":
         system_prompt = f"""Bạn là trợ lý AI học tập chuyên môn {subject}. 
 Bạn đang hoạt động ở chế độ giải bài tập.
-Hãy trả lời câu hỏi của học sinh THCS bằng tiếng Việt.
+Hãy trả lời câu hỏi của học sinh THCS hoàn toàn bằng tiếng Việt.
+Tất cả các thuật ngữ toán học và từ ngữ chuyên môn cần được dịch sang tiếng Việt.
+Không sử dụng các từ tiếng Anh trừ khi thật sự cần thiết.
 Phản hồi của bạn phải tuân theo định dạng sau đây:
 1. Đầu tiên, hãy nêu đáp án cuối cùng một cách ngắn gọn, không quá 1-3 dòng.
 2. Tiếp theo, trên một dòng riêng biệt, hãy viết dòng văn bản: "---GIẢI THÍCH---"
