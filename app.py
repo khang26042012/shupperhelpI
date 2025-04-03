@@ -162,25 +162,19 @@ def upload_image():
             optimized_filepath = os.path.join(app.config['UPLOAD_FOLDER'], optimized_filename)
             cv2.imwrite(optimized_filepath, optimized)
             
-            # Lấy full URL của ảnh cho API Gemini (phải là URL public cho Gemini API)
-            # Cần đảm bảo đường dẫn không bị trùng lặp domain
-            image_path = image_url.replace(request.host_url.rstrip('/'), '')
-            if image_path.startswith('/'):
-                image_path = image_path[1:]
-            full_image_url = request.host_url.rstrip('/') + '/' + image_path
+            # Sử dụng đường dẫn tương đối cho ảnh thay vì URL đầy đủ
+            # Vì chúng ta đã sửa đổi API để đọc ảnh trực tiếp từ hệ thống tệp
+            image_relative_path = url_for('static', filename=f'uploads/{filename}')
             
             # Ghi log để debug
-            logger.debug(f"Host URL: {request.host_url}")
-            logger.debug(f"Image URL: {image_url}")
-            logger.debug(f"Image path: {image_path}")
-            logger.debug(f"Full image URL: {full_image_url}")
+            logger.debug(f"Image relative path: {image_relative_path}")
 
             # Tạo prompt mô tả cho AI
             prompt = f"Đây là ảnh chụp bài toán. Hãy giải bài toán này. Nếu không thấy rõ ảnh, hãy thông báo."
             
             # Sử dụng API Gemini để lấy phản hồi với chế độ giải bài phù hợp
             # và truyền image_url để Gemini phân tích ảnh
-            response_text = get_specialized_ai_response(prompt, subject, mode, solution_mode, full_image_url)
+            response_text = get_specialized_ai_response(prompt, subject, mode, solution_mode, image_relative_path)
             
             # Lưu vào lịch sử chat
             if 'chat_history' not in session:

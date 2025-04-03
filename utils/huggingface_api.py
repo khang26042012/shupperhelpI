@@ -220,34 +220,83 @@ def call_gemini_api(prompt: str, api_key: str, image_url: Optional[str] = None) 
     contents = []
     
     # Nếu có ảnh, xác định kiểu yêu cầu multimodal
-    if image_url and image_url.startswith(('http://', 'https://')):
+    if image_url:
         logger.debug(f"Including image URL in request: {image_url}")
         
         try:
-            # Tải ảnh từ URL
-            image_response = requests.get(image_url)
-            image_response.raise_for_status()
+            # Đường dẫn tuyệt đối tới file ảnh trên server
+            image_file_path = None
             
-            # Mã hóa ảnh thành base64
-            image_base64 = base64.b64encode(image_response.content).decode('utf-8')
+            # Kiểm tra nếu đây là URL đầy đủ
+            if image_url.startswith(('http://', 'https://')):
+                # Xử lý URL, lấy đường dẫn tương đối
+                parts = image_url.split('/static/')
+                if len(parts) > 1:
+                    relative_path = 'static/' + parts[1]
+                    image_file_path = os.path.join(os.getcwd(), relative_path)
+            else:
+                # Có thể là đường dẫn tương đối
+                image_file_path = os.path.join(os.getcwd(), image_url.lstrip('/'))
             
-            # Thêm ảnh vào request
-            contents.append({
-                "parts": [
-                    {
-                        "text": enhanced_prompt
-                    },
-                    {
-                        "inline_data": {
-                            "mime_type": "image/jpeg",
-                            "data": image_base64
+            logger.debug(f"Looking for image at path: {image_file_path}")
+            
+            # Kiểm tra file có tồn tại không
+            if image_file_path and os.path.exists(image_file_path):
+                # Đọc file ảnh trực tiếp từ hệ thống file
+                with open(image_file_path, 'rb') as img_file:
+                    image_data = img_file.read()
+                    
+                # Mã hóa ảnh thành base64
+                image_base64 = base64.b64encode(image_data).decode('utf-8')
+                
+                # Thêm ảnh vào request
+                contents.append({
+                    "parts": [
+                        {
+                            "text": enhanced_prompt
+                        },
+                        {
+                            "inline_data": {
+                                "mime_type": "image/jpeg",
+                                "data": image_base64
+                            }
                         }
-                    }
-                ]
-            })
-            logger.debug("Image successfully encoded and added to request")
+                    ]
+                })
+                logger.debug("Image successfully encoded and added to request")
+            else:
+                # Không tìm thấy file, thử tải từ URL
+                logger.debug(f"File not found, trying to download from URL: {image_url}")
+                
+                # Nếu đây là URL đầy đủ, thử tải về
+                if image_url.startswith(('http://', 'https://')):
+                    image_response = requests.get(image_url)
+                    image_response.raise_for_status()
+                    
+                    # Mã hóa ảnh thành base64
+                    image_base64 = base64.b64encode(image_response.content).decode('utf-8')
+                    
+                    # Thêm ảnh vào request
+                    contents.append({
+                        "parts": [
+                            {
+                                "text": enhanced_prompt
+                            },
+                            {
+                                "inline_data": {
+                                    "mime_type": "image/jpeg",
+                                    "data": image_base64
+                                }
+                            }
+                        ]
+                    })
+                    logger.debug("Image successfully downloaded and encoded")
+                else:
+                    # Không phải URL và không tìm thấy file
+                    raise FileNotFoundError(f"Image file not found: {image_file_path}")
+                    
         except Exception as e:
-            logger.error(f"Error processing image from URL: {str(e)}")
+            logger.error(f"Error processing image: {str(e)}")
             # Nếu có lỗi với ảnh, trở lại text-only request
             contents.append({
                 "parts": [
