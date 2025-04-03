@@ -165,7 +165,29 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function formatMessage(text) {
-        return text
+        // Thay thế các từ tiếng Anh phổ biến sang tiếng Việt
+        const translations = {
+            'Express': 'Biểu diễn',
+            'Solve': 'Giải',
+            'Find': 'Tìm',
+            'in terms of': 'theo',
+            'solution': 'nghiệm',
+            'specific solutions': 'nghiệm cụ thể',
+            'For example': 'Ví dụ',
+            'is a': 'là một',
+            'To graph': 'Để vẽ đồ thị',
+            'you only need': 'bạn chỉ cần',
+            'two points': 'hai điểm',
+            'The examples above': 'Các ví dụ trên',
+            'would be': 'sẽ là'
+        };
+
+        let formattedText = text;
+        for (const [eng, viet] of Object.entries(translations)) {
+            formattedText = formattedText.replace(new RegExp(eng, 'gi'), viet);
+        }
+
+        return formattedText
             .replace(/\n/g, '<br>')
             .replace(/```([\s\S]*?)```/g, '<pre>$1</pre>');
     }
