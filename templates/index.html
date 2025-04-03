@@ -146,7 +146,7 @@
                                                 <i class="fas fa-camera me-1"></i>Chụp ảnh
                                             </button>
                                             <button id="processImageButton" class="btn btn-success" type="button">
-                                                <i class="fas fa-magic me-1"></i>Trích xuất văn bản
+                                                <i class="fas fa-magic me-1"></i>Giải bài toán trong ảnh
                                             </button>
                                         </div>
                                     </div>
@@ -157,24 +157,11 @@
                                         </div>
                                     </div>
                                 </div>
-                                
-                                <!-- OCR Result -->
-                                <div id="ocrResultContainer" class="ocr-result-container mt-3 d-none">
-                                    <div class="card">
-                                        <div class="card-header bg-success text-white">
-                                            <i class="fas fa-check-circle me-1"></i>Kết quả nhận dạng
-                                        </div>
-                                        <div class="card-body">
-                                            <div class="mb-3">
-                                                <label for="extractedText" class="form-label">Văn bản đã trích xuất:</label>
-                                                <textarea id="extractedText" class="form-control" rows="3" readonly></textarea>
-                                            </div>
-                                            <div class="d-grid">
-                                                <button id="useExtractedTextButton" class="btn btn-primary" type="button">
-                                                    <i class="fas fa-arrow-right me-1"></i>Dùng văn bản này
-                                                </button>
-                                            </div>
-                                        </div>
+                                <div class="mt-3">
+                                    <div class="alert alert-info">
+                                        <i class="fas fa-info-circle me-2"></i>
+                                        <small>Trợ lý AI sẽ giải bài toán trực tiếp từ ảnh của bạn. Hãy đảm bảo ảnh rõ ràng, không bị mờ và 
+                                        chứa đầy đủ nội dung bài toán.</small>
                                     </div>
                                 </div>
                             </div>
@@ -257,7 +244,7 @@
         <div class="spinner-border text-primary" role="status">
             <span class="visually-hidden">Đang xử lý...</span>
         </div>
-        <p class="mt-2 text-white">Đang xử lý ảnh và nhận dạng chữ...</p>
+        <p class="mt-2 text-white">Đang xử lý ảnh và giải bài toán...</p>
     </div>
 
     <!-- Bootstrap 5 JS Bundle -->

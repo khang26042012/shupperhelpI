@@ -1,6 +1,7 @@
 import os
 import logging
 import requests
+import base64
 from typing import Optional, Dict, Any
 
 # Set up logging
@@ -14,13 +15,14 @@ GREETING_MESSAGES = [
     "Xin chào! Tôi sẵn sàng hỗ trợ bạn trong việc học tập."
 ]
 
-def get_ai_response(prompt: str, context: Optional[str] = None) -> str:
+def get_ai_response(prompt: str, context: Optional[str] = None, image_url: Optional[str] = None) -> str:
     """
     Get AI response using Google Gemini API.
     
     Args:
         prompt: The user's message/query
         context: Optional context like subject and mode
+        image_url: Optional URL to an image to include in the prompt
         
     Returns:
         AI response as string
@@ -29,6 +31,8 @@ def get_ai_response(prompt: str, context: Optional[str] = None) -> str:
         logger.debug(f"Received prompt: {prompt}")
         if context:
             logger.debug(f"Context: {context}")
+        if image_url:
+            logger.debug(f"Image URL: {image_url}")
         
         # Get API key from Flask app config or environment
         from flask import current_app
@@ -55,7 +59,7 @@ def get_ai_response(prompt: str, context: Optional[str] = None) -> str:
             full_prompt = f"{context}\n\n{prompt}"
         
         # Call Google Gemini API
-        response = call_gemini_api(full_prompt, api_key)
+        response = call_gemini_api(full_prompt, api_key, image_url)
         
         return response
     
@@ -63,7 +67,7 @@ def get_ai_response(prompt: str, context: Optional[str] = None) -> str:
         logger.error(f"Error in get_ai_response: {str(e)}")
         return "Đã xảy ra lỗi khi xử lý yêu cầu của bạn. Vui lòng thử lại sau."
 
-def get_specialized_ai_response(prompt: str, subject: str, mode: str, solution_mode: str = "full") -> str:
+def get_specialized_ai_response(prompt: str, subject: str, mode: str, solution_mode: str = "full", image_url: Optional[str] = None) -> str:
     """
     Get a response from Google Gemini AI based on subject and mode.
     
@@ -72,6 +76,7 @@ def get_specialized_ai_response(prompt: str, subject: str, mode: str, solution_m
         subject: The academic subject
         mode: The mode (trợ lý or giải bài tập)
         solution_mode: The solution mode (full, step_by_step, or hint)
+        image_url: Optional URL to an image to include in the prompt
         
     Returns:
         The AI's response as a string
@@ -180,15 +185,16 @@ Hãy trả lời câu hỏi của học sinh THCS bằng tiếng Việt.
 Hãy giải thích chi tiết và giúp học sinh hiểu vấn đề."""
 
     context = f"{system_prompt}\nMôn học: {subject}, Chế độ: {mode}"
-    return get_ai_response(prompt, context)
+    return get_ai_response(prompt, context, image_url)
 
-def call_gemini_api(prompt: str, api_key: str) -> str:
+def call_gemini_api(prompt: str, api_key: str, image_url: Optional[str] = None) -> str:
     """
     Call the Google Gemini API and return the response.
     
     Args:
         prompt: The full prompt to send to the API
         api_key: The Google AI API key
+        image_url: Optional URL to an image to include in the prompt
         
     Returns:
         The text response from the API
@@ -206,21 +212,62 @@ def call_gemini_api(prompt: str, api_key: str) -> str:
     vietnamese_instruction = ("Trả lời hoàn toàn bằng tiếng Việt. "
                            "Tất cả các thuật ngữ toán học, khoa học và các giải thích phải được viết bằng tiếng Việt. "
                            "Không sử dụng tiếng Anh trong câu trả lời. "
-                           "Đây là câu hỏi: ")
+                           "Phân tích và giải bài toán hoặc trả lời câu hỏi sau: ")
     
     enhanced_prompt = vietnamese_instruction + prompt
     
     # Prepare request payload theo định dạng API v1
-    payload = {
-        "contents": [
-            {
+    contents = []
+    
+    # Nếu có ảnh, xác định kiểu yêu cầu multimodal
+    if image_url and image_url.startswith(('http://', 'https://')):
+        logger.debug(f"Including image URL in request: {image_url}")
+        
+        try:
+            # Tải ảnh từ URL
+            image_response = requests.get(image_url)
+            image_response.raise_for_status()
+            
+            # Mã hóa ảnh thành base64
+            image_base64 = base64.b64encode(image_response.content).decode('utf-8')
+            
+            # Thêm ảnh vào request
+            contents.append({
                 "parts": [
                     {
                         "text": enhanced_prompt
+                    },
+                    {
+                        "inline_data": {
+                            "mime_type": "image/jpeg",
+                            "data": image_base64
+                        }
                     }
                 ]
-            }
-        ],
+            })
+            logger.debug("Image successfully encoded and added to request")
+        except Exception as e:
+            logger.error(f"Error processing image from URL: {str(e)}")
+            # Nếu có lỗi với ảnh, trở lại text-only request
+            contents.append({
+                "parts": [
+                    {
+                        "text": enhanced_prompt + " (Lưu ý: Không thể xử lý ảnh do lỗi kỹ thuật)"
+                    }
+                ]
+            })
+    else:
+        # Nếu không có ảnh, sử dụng text-only request
+        contents.append({
+            "parts": [
+                {
+                    "text": enhanced_prompt
+                }
+            ]
+        })
+    
+    payload = {
+        "contents": contents,
         "generation_config": {
             "temperature": 0.7,
             "top_k": 40,

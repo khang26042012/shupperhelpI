@@ -126,7 +126,7 @@ def allowed_file(filename):
 
 @app.route('/upload_image', methods=['POST'])
 def upload_image():
-    """Tính năng tải ảnh và trích xuất chữ viết tay."""
+    """Tính năng tải ảnh và gửi trực tiếp đến AI để giải đáp."""
     try:
         if 'image' not in request.files:
             return jsonify({"error": "Không tìm thấy hình ảnh nào"}), 400
@@ -135,57 +135,70 @@ def upload_image():
         if file.filename == '':
             return jsonify({"error": "Không có tên tệp"}), 400
         
+        # Lấy thông tin từ form data
+        solution_mode = request.form.get('solution_mode', 'full')  # full, step_by_step, or hint
+        subject = request.form.get('subject', 'toán học')
+        mode = request.form.get('mode', 'giải bài tập')
+        
         if file and allowed_file(file.filename):
             # Lưu tệp tạm thời
             filename = secure_filename(file.filename)
             filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
             file.save(filepath)
             
-            # Xử lý ảnh
-            # Đọc ảnh bằng OpenCV
+            # Lưu URL ảnh
+            image_url = url_for('static', filename=f'uploads/{filename}', _external=True)
+            
+            # Xử lý ảnh (để tối ưu hiển thị, không phải để OCR)
             image = cv2.imread(filepath)
             
-            # Chuyển đổi ảnh sang độ xám
+            # Tự động điều chỉnh độ sáng và tương phản để tối ưu hiển thị
             gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+            clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8, 8))
+            optimized = clahe.apply(gray)
             
-            # Tiền xử lý ảnh để cải thiện chất lượng nhận dạng
-            # Áp dụng GaussianBlur để giảm nhiễu
-            blur = cv2.GaussianBlur(gray, (5, 5), 0)
+            # Lưu ảnh đã tối ưu
+            optimized_filename = f"optimized_{filename}"
+            optimized_filepath = os.path.join(app.config['UPLOAD_FOLDER'], optimized_filename)
+            cv2.imwrite(optimized_filepath, optimized)
             
-            # Áp dụng phân ngưỡng để tạo ảnh nhị phân
-            _, binary = cv2.threshold(blur, 0, 255, cv2.THRESH_BINARY_INV + cv2.THRESH_OTSU)
+            # Lấy full URL của ảnh cho API Gemini (phải là URL public)
+            full_image_url = request.host_url.rstrip('/') + image_url
+
+            # Tạo prompt mô tả cho AI
+            prompt = f"Đây là ảnh chụp bài toán. Hãy giải bài toán này. Nếu không thấy rõ ảnh, hãy thông báo."
             
-            # Sử dụng pytesseract để nhận dạng chữ
-            # Đặt config để nhận dạng cả chữ Việt và chữ số
-            custom_config = r'--oem 3 --psm 6'
+            # Sử dụng API Gemini để lấy phản hồi với chế độ giải bài phù hợp
+            # và truyền image_url để Gemini phân tích ảnh
+            response_text = get_specialized_ai_response(prompt, subject, mode, solution_mode, full_image_url)
             
-            try:
-                # Thử nhận dạng với pytesseract
-                extracted_text = pytesseract.image_to_string(binary, config=custom_config, lang='vie+eng')
-            except Exception as e:
-                logger.error(f"Lỗi khi nhận dạng văn bản: {str(e)}")
-                # Thử nhận dạng không có lang nếu gặp lỗi
-                extracted_text = pytesseract.image_to_string(binary, config=custom_config)
+            # Lưu vào lịch sử chat
+            if 'chat_history' not in session:
+                session['chat_history'] = []
             
-            # Tiền xử lý văn bản đã trích xuất
-            extracted_text = extracted_text.strip()
+            session['chat_history'].append({
+                'user': f"[Ảnh bài toán: {filename}]",
+                'bot': response_text,
+                'solution_mode': solution_mode,
+                'subject': subject,
+                'mode': mode,
+                'image_url': image_url
+            })
             
-            # Lưu ảnh đã xử lý để debug
-            processed_filename = f"processed_{filename}"
-            processed_filepath = os.path.join(app.config['UPLOAD_FOLDER'], processed_filename)
-            cv2.imwrite(processed_filepath, binary)
+            session.modified = True
             
-            # Mã hóa ảnh đã xử lý để gửi về client
-            _, buffer = cv2.imencode('.jpg', binary)
-            processed_image_b64 = base64.b64encode(buffer).decode('utf-8')
+            # Mã hóa ảnh đã tối ưu để gửi về client
+            _, buffer = cv2.imencode('.jpg', optimized)
+            optimized_image_b64 = base64.b64encode(buffer).decode('utf-8')
             
             # Trả về kết quả
             return jsonify({
                 "status": "success",
-                "extracted_text": extracted_text,
+                "response": response_text,
+                "solution_mode": solution_mode,
                 "original_image": url_for('static', filename=f'uploads/{filename}'),
-                "processed_image": url_for('static', filename=f'uploads/{processed_filename}'),
-                "processed_image_b64": processed_image_b64
+                "optimized_image": url_for('static', filename=f'uploads/{optimized_filename}'),
+                "optimized_image_b64": optimized_image_b64
             }), 200
         else:
             return jsonify({"error": "Định dạng tệp không được hỗ trợ"}), 400

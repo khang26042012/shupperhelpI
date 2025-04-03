@@ -499,6 +499,9 @@ document.addEventListener('DOMContentLoaded', function() {
         
         const formData = new FormData();
         formData.append('image', file);
+        formData.append('solution_mode', currentSolutionMode);
+        formData.append('subject', 'toán học');
+        formData.append('mode', 'giải bài tập');
         
         try {
             const response = await fetch('/upload_image', {
@@ -509,15 +512,73 @@ document.addEventListener('DOMContentLoaded', function() {
             const data = await response.json();
             
             if (response.ok) {
-                // Hiển thị kết quả
-                extractedText.value = data.extracted_text;
-                ocrResultContainer.classList.remove('d-none');
+                // Ẩn container tải ảnh lên
+                imageUploadContainer.classList.add('d-none');
                 
-                // Hiển thị ảnh đã xử lý
-                if (data.processed_image_b64) {
-                    const processedImg = `data:image/jpeg;base64,${data.processed_image_b64}`;
-                    imagePreview.src = processedImg;
+                // Hiển thị ảnh đã tối ưu
+                if (data.optimized_image_b64) {
+                    const optimizedImg = `data:image/jpeg;base64,${data.optimized_image_b64}`;
+                    
+                    // Thêm hình ảnh vào tin nhắn người dùng
+                    const imgMsg = `<div class="uploaded-image-container mb-2">
+                        <p class="mb-1"><i class="fas fa-image me-1"></i>Ảnh bài toán:</p>
+                        <img src="${optimizedImg}" class="img-fluid img-thumbnail uploaded-image" style="max-height: 200px;">
+                    </div>
+                    <p>Giải bài toán trong ảnh</p>`;
+                    
+                    addMessage(imgMsg, 'user');
                 }
+                
+                // Xử lý phản hồi từ AI
+                let formattedResponse = data.response;
+                
+                // Xử lý các bước giải toán
+                formattedResponse = formattedResponse.replace(/\*\*"([^"]+)"\*\*/g, (_, content) => {
+                    return `<strong>${content}</strong>`;
+                });
+
+                // Định dạng công thức toán học
+                formattedResponse = formattedResponse.replace(/\$\$(.*?)\$\$/g, (_, formula) => {
+                    return `\\[${formula}\\]`;
+                });
+                formattedResponse = formattedResponse.replace(/\$(.*?)\$/g, (_, formula) => {
+                    return `\\(${formula}\\)`;
+                });
+
+                // Xử lý các phần giải thích từng bước
+                let explanationText = '';
+                let mainText = formattedResponse;
+                
+                // Xử lý format từng bước
+                if (currentSolutionMode === 'step_by_step') {
+                    const parts = formattedResponse.split('---GIẢI THÍCH TỪNG BƯỚC---');
+                    if (parts.length > 1) {
+                        mainText = parts[0].trim();
+                        explanationText = parts[1].trim();
+                    }
+                } 
+                // Xử lý format đầy đủ
+                else if (currentSolutionMode === 'full') {
+                    const parts = formattedResponse.split('---GIẢI THÍCH---');
+                    if (parts.length > 1) {
+                        mainText = parts[0].trim();
+                        explanationText = parts[1].trim();
+                    }
+                }
+
+                // Nếu có phần giải thích, hiển thị riêng
+                if (explanationText) {
+                    const solutionMode = currentSolutionMode === 'step_by_step' ? 'GIẢI THÍCH TỪNG BƯỚC' : 'GIẢI THÍCH';
+                    formattedResponse = `${mainText}\n\n---${solutionMode}---\n${explanationText}`;
+                }
+
+                // Thêm phản hồi AI vào cuộc trò chuyện
+                addMessage(formattedResponse, 'bot');
+
+                if (window.MathJax) {
+                    MathJax.typesetPromise();
+                }
+                
             } else {
                 alert(data.error || 'Có lỗi xảy ra khi xử lý ảnh');
             }
@@ -526,15 +587,6 @@ document.addEventListener('DOMContentLoaded', function() {
             alert('Không thể kết nối với máy chủ. Vui lòng thử lại sau.');
         } finally {
             processingImageOverlay.classList.add('d-none');
-        }
-    }
-    
-    function useExtractedTextAsInput() {
-        const text = extractedText.value.trim();
-        if (text) {
-            messageInput.value = text;
-            imageUploadContainer.classList.add('d-none');
-            messageInput.focus();
         }
     }
     
@@ -594,6 +646,11 @@ document.addEventListener('DOMContentLoaded', function() {
             if (modal) {
                 modal.hide();
             }
+            
+            // Tự động xử lý ảnh sau khi chụp
+            setTimeout(() => {
+                processImage();
+            }, 500);
         }, 'image/jpeg', 0.95);
     }
 });
