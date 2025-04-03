@@ -18,7 +18,8 @@ logger = logging.getLogger(__name__)
 
 # Create Flask app
 app = Flask(__name__)
-app.secret_key = os.environ.get("SESSION_SECRET", "default_secret_key")
+# Đặt secret key trực tiếp để đảm bảo hoạt động
+app.secret_key = "your_secure_secret_key_for_sessions_123456789"
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max upload size
 app.config['UPLOAD_FOLDER'] = os.path.join('static', 'uploads')
 app.config['GOOGLE_AI_API_KEY'] = os.environ.get("GOOGLE_AI_API_KEY", "")
