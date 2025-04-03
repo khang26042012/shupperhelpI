@@ -256,8 +256,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 body: JSON.stringify({
                     message: message,
                     solution_mode: currentSolutionMode,
-                    subject: 'toán học',  // Mặc định là "toán học"
-                    mode: 'giải bài tập'  // Mặc định là "giải bài tập"
+                    subject: 'chung',  // Mở rộng để hỗ trợ tất cả các chủ đề
+                    mode: 'giải bài tập'  // Giữ chế độ giải bài tập
                 })
             });
 
@@ -581,7 +581,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const formData = new FormData();
             formData.append('image', file);
             formData.append('solution_mode', currentSolutionMode);
-            formData.append('subject', 'toán học');
+            formData.append('subject', 'chung');
             formData.append('mode', 'giải bài tập');
             
             console.log('Đang gửi ảnh để xử lý...');
@@ -607,10 +607,10 @@ document.addEventListener('DOMContentLoaded', function() {
                     
                     // Thêm hình ảnh vào tin nhắn người dùng
                     const imgMsg = `<div class="uploaded-image-container mb-2">
-                        <p class="mb-1"><i class="fas fa-image me-1"></i>Ảnh bài toán:</p>
+                        <p class="mb-1"><i class="fas fa-image me-1"></i>Ảnh đã tải lên:</p>
                         <img src="${optimizedImg}" class="img-fluid img-thumbnail uploaded-image" style="max-height: 200px;">
                     </div>
-                    <p>Giải bài toán trong ảnh</p>`;
+                    <p>Hãy giải thích nội dung trong ảnh này</p>`;
                     
                     addMessage(imgMsg, 'user');
                 }

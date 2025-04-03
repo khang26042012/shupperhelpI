@@ -80,7 +80,7 @@ def send_message():
         data = request.json
         user_message = data.get('message', '')
         solution_mode = data.get('solution_mode', 'full')  # full, step_by_step, or hint
-        subject = data.get('subject', 'toán học')  # Mặc định là "toán học"
+        subject = data.get('subject', 'chung')  # Không giới hạn môn học
         mode = data.get('mode', 'giải bài tập')  # Mặc định là "giải bài tập"
         
         # Log incoming request
@@ -90,11 +90,8 @@ def send_message():
         if not user_message:
             return jsonify({"error": "Tin nhắn không được để trống"}), 400
         
-        # Sử dụng API Gemini để lấy phản hồi với chế độ giải bài phù hợp
-        if mode == "giải bài tập":
-            response_text = get_specialized_ai_response(user_message, subject, mode, solution_mode)
-        else:
-            response_text = get_ai_response(user_message)
+        # Sử dụng API Gemini để lấy phản hồi
+        response_text = get_specialized_ai_response(user_message, subject, mode, solution_mode)
         
         # Save to history
         if 'chat_history' not in session:
@@ -137,7 +134,7 @@ def upload_image():
         
         # Lấy thông tin từ form data
         solution_mode = request.form.get('solution_mode', 'full')  # full, step_by_step, or hint
-        subject = request.form.get('subject', 'toán học')
+        subject = request.form.get('subject', 'chung')
         mode = request.form.get('mode', 'giải bài tập')
         
         if file and allowed_file(file.filename):
@@ -170,7 +167,7 @@ def upload_image():
             logger.debug(f"Image relative path: {image_relative_path}")
 
             # Tạo prompt mô tả cho AI
-            prompt = f"Đây là ảnh chụp bài toán. Hãy giải bài toán này. Nếu không thấy rõ ảnh, hãy thông báo."
+            prompt = f"Đây là ảnh chứa nội dung mà học sinh muốn hỏi. Hãy phân tích thông tin trong ảnh và trả lời câu hỏi liên quan. Nếu không thấy rõ ảnh, hãy thông báo."
             
             # Sử dụng API Gemini để lấy phản hồi với chế độ giải bài phù hợp
             # và truyền image_url để Gemini phân tích ảnh
@@ -181,7 +178,7 @@ def upload_image():
                 session['chat_history'] = []
             
             session['chat_history'].append({
-                'user': f"[Ảnh bài toán: {filename}]",
+                'user': f"[Ảnh đã tải lên: {filename}]",
                 'bot': response_text,
                 'solution_mode': solution_mode,
                 'subject': subject,
