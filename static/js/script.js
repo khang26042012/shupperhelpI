@@ -179,7 +179,17 @@ document.addEventListener('DOMContentLoaded', function() {
             'you only need': 'bạn chỉ cần',
             'two points': 'hai điểm',
             'The examples above': 'Các ví dụ trên',
-            'would be': 'sẽ là'
+            'would be': 'sẽ là',
+            'This is a linear equation': 'Đây là phương trình tuyến tính',
+            'in two variables': 'với hai biến',
+            'it represents': 'nó biểu diễn',
+            'a straight line': 'một đường thẳng',
+            'on a graph': 'trên đồ thị',
+            'you can': 'bạn có thể',
+            'Get for y theo': 'Tìm y theo',
+            'Get for x theo': 'Tìm x theo',
+            'Find the x-intercept': 'Tìm giao điểm với trục x',
+            'where y': 'khi y'
         };
 
         let formattedText = text;
