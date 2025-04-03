@@ -63,7 +63,7 @@ def get_ai_response(prompt: str, context: Optional[str] = None) -> str:
         logger.error(f"Error in get_ai_response: {str(e)}")
         return "Đã xảy ra lỗi khi xử lý yêu cầu của bạn. Vui lòng thử lại sau."
 
-def get_specialized_ai_response(prompt: str, subject: str, mode: str) -> str:
+def get_specialized_ai_response(prompt: str, subject: str, mode: str, solution_mode: str = "full") -> str:
     """
     Get a response from Google Gemini AI based on subject and mode.
     
@@ -71,16 +71,94 @@ def get_specialized_ai_response(prompt: str, subject: str, mode: str) -> str:
         prompt: The user's message/query
         subject: The academic subject
         mode: The mode (trợ lý or giải bài tập)
+        solution_mode: The solution mode (full, step_by_step, or hint)
         
     Returns:
         The AI's response as a string
     """
     if mode == "giải bài tập":
-        system_prompt = f"""Bạn là trợ lý AI học tập chuyên môn {subject}. 
+        if solution_mode == "step_by_step":
+            system_prompt = f"""Bạn là trợ lý AI học tập chuyên môn {subject}. 
+Bạn đang hoạt động ở chế độ giải bài tập CHI TIẾT.
+Hãy trả lời câu hỏi của học sinh THCS hoàn toàn bằng tiếng Việt.
+Tất cả các thuật ngữ toán học và từ ngữ chuyên môn cần được dịch sang tiếng Việt.
+Không sử dụng các từ tiếng Anh trừ khi thật sự cần thiết.
+
+Nhiệm vụ của bạn là giải quyết bài toán TỪNG BƯỚC MỘT cách chi tiết nhất, giải thích mỗi bước thực hiện.
+Đặc biệt chú ý:
+1. Chia quá trình giải thành các bước rõ ràng, đánh số từng bước.
+2. Ở mỗi bước, giải thích lý do tại sao thực hiện bước đó.
+3. Đưa ra công thức cụ thể và cách áp dụng công thức.
+4. Với các bài toán khó, hãy đưa ra hình vẽ hoặc phân tích chi tiết bằng từ ngữ.
+
+Phản hồi của bạn phải tuân theo định dạng sau đây:
+1. Đầu tiên, hãy nêu đáp án cuối cùng một cách ngắn gọn, không quá 1-3 dòng.
+2. Tiếp theo, trên một dòng riêng biệt, hãy viết dòng văn bản: "---GIẢI THÍCH TỪNG BƯỚC---"
+3. Sau đó, cung cấp phần giải thích chi tiết và quá trình giải theo từng bước.
+
+Ví dụ:
+"Đáp án: 42m^2
+
+---GIẢI THÍCH TỪNG BƯỚC---
+Bước 1: Xác định công thức tính diện tích hình chữ nhật
+- Công thức: S = a × b (với a, b là chiều dài và chiều rộng)
+- Lý do sử dụng: Đề bài cho biết hình là hình chữ nhật
+
+Bước 2: Xác định các giá trị đã biết
+- Chiều dài a = 6m 
+- Chiều rộng b = 7m
+
+Bước 3: Áp dụng công thức tính diện tích
+- S = a × b = 6m × 7m = 42m²
+
+Bước 4: Kiểm tra kết quả
+- Kết quả hợp lý vì diện tích luôn dương
+- Đơn vị đo đã đúng là m²
+
+Vậy diện tích hình chữ nhật là 42m²."
+"""
+        elif solution_mode == "hint":
+            system_prompt = f"""Bạn là trợ lý AI học tập chuyên môn {subject}. 
+Bạn đang hoạt động ở chế độ GỢI Ý giải bài tập.
+Hãy trả lời câu hỏi của học sinh THCS hoàn toàn bằng tiếng Việt.
+Tất cả các thuật ngữ toán học và từ ngữ chuyên môn cần được dịch sang tiếng Việt.
+Không sử dụng các từ tiếng Anh trừ khi thật sự cần thiết.
+
+Nhiệm vụ của bạn là chỉ đưa ra GỢI Ý giúp học sinh TỰ GIẢI, không đưa ra đáp án trực tiếp.
+Đặc biệt chú ý:
+1. Chỉ đưa ra gợi ý về hướng tiếp cận, KHÔNG giải toàn bộ bài toán.
+2. Gợi ý nên bao gồm công thức cần áp dụng, các bước cần thực hiện.
+3. Nên đặt câu hỏi gợi mở để học sinh tự suy nghĩ.
+4. KHÔNG đưa ra đáp án cuối cùng.
+
+Phản hồi của bạn phải tuân theo định dạng sau đây:
+1. Đầu tiên, xác định loại bài toán và kiến thức liên quan.
+2. Tiếp theo, đưa ra hướng tiếp cận và các gợi ý theo thứ tự từ cơ bản đến nâng cao.
+3. Kết thúc bằng câu khuyến khích học sinh tự giải.
+
+Ví dụ:
+"Đây là bài toán về diện tích hình chữ nhật. Để giải bài này, em cần:
+
+Gợi ý 1: Nhớ lại công thức tính diện tích hình chữ nhật là gì?
+Gợi ý 2: Đề bài đã cho biết chiều dài và chiều rộng, hãy xác định chúng.
+Gợi ý 3: Thay các giá trị vào công thức và tính toán kết quả.
+Gợi ý 4: Đừng quên đơn vị đo diện tích là gì?
+
+Hãy thử giải bài toán với các gợi ý trên và kiểm tra lại kết quả của mình."
+"""
+        else:  # full solution mode (default)
+            system_prompt = f"""Bạn là trợ lý AI học tập chuyên môn {subject}. 
 Bạn đang hoạt động ở chế độ giải bài tập.
 Hãy trả lời câu hỏi của học sinh THCS hoàn toàn bằng tiếng Việt.
 Tất cả các thuật ngữ toán học và từ ngữ chuyên môn cần được dịch sang tiếng Việt.
 Không sử dụng các từ tiếng Anh trừ khi thật sự cần thiết.
+
+Hỗ trợ đa dạng loại bài tập:
+- Phương trình, bất phương trình
+- Hệ phương trình, tích phân, đạo hàm
+- Bài toán hình học, đại số, giải tích
+- Vật lý, hóa học, sinh học và các môn khác
+
 Phản hồi của bạn phải tuân theo định dạng sau đây:
 1. Đầu tiên, hãy nêu đáp án cuối cùng một cách ngắn gọn, không quá 1-3 dòng.
 2. Tiếp theo, trên một dòng riêng biệt, hãy viết dòng văn bản: "---GIẢI THÍCH---"

@@ -10,10 +10,14 @@ document.addEventListener('DOMContentLoaded', function() {
     const mathInputContainer = document.querySelector('.math-input-container');
     const insertMathButton = document.getElementById('insertMathButton');
     const darkModeText = document.getElementById('darkModeText');
+    const solutionModeBtns = document.querySelectorAll('.solution-mode-btn');
     
     // MathQuill elements
     let mathField;
     let mathPreview = document.getElementById('mathPreview');
+
+    // Solution mode state
+    let currentSolutionMode = 'full';
 
     // Dark mode state
     let isDarkMode = false;
@@ -21,6 +25,13 @@ document.addEventListener('DOMContentLoaded', function() {
     // Kiểm tra localStorage cho chế độ tối
     if (localStorage.getItem('darkMode') === 'enabled') {
         enableDarkMode();
+    }
+
+    // Kiểm tra localStorage cho chế độ giải bài
+    const savedSolutionMode = localStorage.getItem('solutionMode');
+    if (savedSolutionMode) {
+        currentSolutionMode = savedSolutionMode;
+        updateSolutionModeButtons(currentSolutionMode);
     }
 
     // Initialize chat
@@ -35,8 +46,29 @@ document.addEventListener('DOMContentLoaded', function() {
     toggleMathButton.addEventListener('click', toggleMathInput);
     toggleDarkModeButton.addEventListener('click', toggleDarkMode);
     
+    // Solution mode buttons event listeners
+    solutionModeBtns.forEach(btn => {
+        btn.addEventListener('click', function() {
+            const mode = this.getAttribute('data-mode');
+            currentSolutionMode = mode;
+            updateSolutionModeButtons(mode);
+            localStorage.setItem('solutionMode', mode);
+        });
+    });
+    
     if (insertMathButton) {
         insertMathButton.addEventListener('click', insertMathExpression);
+    }
+    
+    // Update solution mode buttons
+    function updateSolutionModeButtons(mode) {
+        solutionModeBtns.forEach(btn => {
+            if (btn.getAttribute('data-mode') === mode) {
+                btn.classList.add('active');
+            } else {
+                btn.classList.remove('active');
+            }
+        });
     }
 
     // Allow pressing Enter to send message (Shift+Enter for new line)
@@ -125,13 +157,17 @@ document.addEventListener('DOMContentLoaded', function() {
         loadingOverlay.classList.remove('d-none');
 
         try {
+            // Gửi thông tin về chế độ giải bài
             const response = await fetch('/send_message', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({
-                    message: message
+                    message: message,
+                    solution_mode: currentSolutionMode,
+                    subject: 'toán học',  // Mặc định là "toán học"
+                    mode: 'giải bài tập'  // Mặc định là "giải bài tập"
                 })
             });
 
@@ -151,6 +187,34 @@ document.addEventListener('DOMContentLoaded', function() {
                 formattedResponse = formattedResponse.replace(/\$(.*?)\$/g, (_, formula) => {
                     return `\\(${formula}\\)`;
                 });
+
+                // Xử lý các phần giải thích từng bước
+                let explanationText = '';
+                let mainText = formattedResponse;
+                
+                // Xử lý format từng bước
+                if (currentSolutionMode === 'step_by_step') {
+                    const parts = formattedResponse.split('---GIẢI THÍCH TỪNG BƯỚC---');
+                    if (parts.length > 1) {
+                        mainText = parts[0].trim();
+                        explanationText = parts[1].trim();
+                    }
+                } 
+                // Xử lý format đầy đủ
+                else if (currentSolutionMode === 'full') {
+                    const parts = formattedResponse.split('---GIẢI THÍCH---');
+                    if (parts.length > 1) {
+                        mainText = parts[0].trim();
+                        explanationText = parts[1].trim();
+                    }
+                }
+                // Gợi ý không cần xử lý đặc biệt vì không có phần ---GIẢI THÍCH---
+
+                // Nếu có phần giải thích, hiển thị riêng
+                if (explanationText) {
+                    const solutionMode = currentSolutionMode === 'step_by_step' ? 'GIẢI THÍCH TỪNG BƯỚC' : 'GIẢI THÍCH';
+                    formattedResponse = `${mainText}\n\n---${solutionMode}---\n${explanationText}`;
+                }
 
                 addMessage(formattedResponse, 'bot');
 
@@ -184,7 +248,18 @@ document.addEventListener('DOMContentLoaded', function() {
         let explanationSection = '';
 
         if (sender === 'bot') {
-            const parts = text.split('---GIẢI THÍCH---');
+            // Kiểm tra cả hai loại định dạng giải thích
+            let parts = [];
+            let buttonText = '';
+            
+            if (text.includes('---GIẢI THÍCH TỪNG BƯỚC---')) {
+                parts = text.split('---GIẢI THÍCH TỪNG BƯỚC---');
+                buttonText = 'Xem giải thích từng bước';
+            } else if (text.includes('---GIẢI THÍCH---')) {
+                parts = text.split('---GIẢI THÍCH---');
+                buttonText = 'Xem giải thích';
+            }
+            
             if (parts.length > 1) {
                 formattedText = parts[0].trim();
                 const explanation = parts[1].trim();
@@ -196,7 +271,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         </div>
                     </div>
                     <button type="button" class="btn btn-sm btn-outline-primary mt-2 toggle-explanation">
-                        <i class="fas fa-lightbulb me-1"></i> Xem giải thích
+                        <i class="fas fa-lightbulb me-1"></i> ${buttonText}
                     </button>
                 `;
             }
@@ -225,8 +300,14 @@ document.addEventListener('DOMContentLoaded', function() {
                     if (explanationDiv) {
                         const isVisible = explanationDiv.style.display !== 'none';
                         explanationDiv.style.display = isVisible ? 'none' : 'block';
+                        
+                        // Xác định loại giải thích để hiển thị đúng tên nút
+                        const buttonText = this.textContent.includes('từng bước') 
+                            ? 'Xem giải thích từng bước' 
+                            : 'Xem giải thích';
+                            
                         this.innerHTML = isVisible 
-                            ? '<i class="fas fa-lightbulb me-1"></i> Xem giải thích'
+                            ? `<i class="fas fa-lightbulb me-1"></i> ${buttonText}`
                             : '<i class="fas fa-times me-1"></i> Ẩn giải thích';
                     }
                 });

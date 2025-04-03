@@ -335,6 +335,34 @@ body {
     font-size: 0.95rem;
 }
 
+/* Solution Mode Buttons */
+.solution-mode-buttons .btn-group {
+    border-radius: 15px;
+    overflow: hidden;
+}
+
+.solution-mode-btn {
+    font-size: 0.8rem;
+    padding: 4px 10px;
+    border: none !important;
+    background-color: rgba(255, 255, 255, 0.2);
+    color: #fff;
+    transition: all 0.3s ease;
+}
+
+.solution-mode-btn:hover, .solution-mode-btn.active {
+    background-color: rgba(255, 255, 255, 0.4);
+    color: #fff;
+}
+
+.dark-mode .solution-mode-btn {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+.dark-mode .solution-mode-btn:hover, .dark-mode .solution-mode-btn.active {
+    background-color: rgba(255, 255, 255, 0.25);
+}
+
 /* Scrollbar styling */
 ::-webkit-scrollbar {
     width: 8px;
@@ -351,6 +379,18 @@ body {
 
 ::-webkit-scrollbar-thumb:hover {
     background: #aaa;
+}
+
+.dark-mode ::-webkit-scrollbar-track {
+    background: #2d2d2d;
+}
+
+.dark-mode ::-webkit-scrollbar-thumb {
+    background: #555;
+}
+
+.dark-mode ::-webkit-scrollbar-thumb:hover {
+    background: #777;
 }
 
 /* Footer styling */

@@ -75,15 +75,22 @@ def send_message():
     try:
         data = request.json
         user_message = data.get('message', '')
+        solution_mode = data.get('solution_mode', 'full')  # full, step_by_step, or hint
+        subject = data.get('subject', 'toán học')  # Mặc định là "toán học"
+        mode = data.get('mode', 'giải bài tập')  # Mặc định là "giải bài tập"
         
         # Log incoming request
         logger.debug(f"Received message request: {user_message[:50]}...")
+        logger.debug(f"Solution mode: {solution_mode}, Subject: {subject}, Mode: {mode}")
         
         if not user_message:
             return jsonify({"error": "Tin nhắn không được để trống"}), 400
         
-        # Sử dụng API Gemini để lấy phản hồi
-        response_text = get_ai_response(user_message)
+        # Sử dụng API Gemini để lấy phản hồi với chế độ giải bài phù hợp
+        if mode == "giải bài tập":
+            response_text = get_specialized_ai_response(user_message, subject, mode, solution_mode)
+        else:
+            response_text = get_ai_response(user_message)
         
         # Save to history
         if 'chat_history' not in session:
@@ -91,13 +98,17 @@ def send_message():
         
         session['chat_history'].append({
             'user': user_message,
-            'bot': response_text
+            'bot': response_text,
+            'solution_mode': solution_mode,
+            'subject': subject,
+            'mode': mode
         })
         
         session.modified = True
         
         return jsonify({
-            "response": response_text
+            "response": response_text,
+            "solution_mode": solution_mode
         })
     
     except Exception as e:

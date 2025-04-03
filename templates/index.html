@@ -74,13 +74,28 @@
                 <!-- Chat Area -->
                 <div class="card shadow-sm">
                     <div class="card-header bg-primary text-white">
-                        <div class="d-flex flex-column align-items-start">
-                            <div>
-                                <i class="fas fa-comment-alt me-2"></i>
-                                <span id="currentModeDisplay" class="fs-5 fw-bold">Trợ Lý</span>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div class="d-flex flex-column align-items-start">
+                                <div>
+                                    <i class="fas fa-comment-alt me-2"></i>
+                                    <span id="currentModeDisplay" class="fs-5 fw-bold">Trợ Lý</span>
+                                </div>
+                                <div class="ms-4">
+                                    <small class="fw-light">Trợ lý học tập thông minh</small>
+                                </div>
                             </div>
-                            <div class="ms-4">
-                                <small class="fw-light">Trợ lý học tập thông minh</small>
+                            <div class="solution-mode-buttons">
+                                <div class="btn-group" role="group" aria-label="Chế độ giải bài">
+                                    <button type="button" class="btn btn-sm btn-outline-light solution-mode-btn active" data-mode="full">
+                                        <i class="fas fa-check-circle me-1"></i>Đầy đủ
+                                    </button>
+                                    <button type="button" class="btn btn-sm btn-outline-light solution-mode-btn" data-mode="step_by_step">
+                                        <i class="fas fa-list-ol me-1"></i>Từng bước
+                                    </button>
+                                    <button type="button" class="btn btn-sm btn-outline-light solution-mode-btn" data-mode="hint">
+                                        <i class="fas fa-lightbulb me-1"></i>Gợi ý
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     </div>
