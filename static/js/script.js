@@ -4,13 +4,32 @@ document.addEventListener('DOMContentLoaded', function() {
     const messageForm = document.getElementById('messageForm');
     const messageInput = document.getElementById('messageInput');
     const loadingOverlay = document.getElementById('loadingOverlay');
+    const processingImageOverlay = document.getElementById('processingImageOverlay');
     const clearHistoryBtn = document.getElementById('clearHistoryBtn');
     const toggleMathButton = document.getElementById('toggleMathButton');
     const toggleDarkModeButton = document.getElementById('toggleDarkModeButton');
+    const toggleImageUploadButton = document.getElementById('toggleImageUploadButton');
     const mathInputContainer = document.querySelector('.math-input-container');
+    const imageUploadContainer = document.querySelector('.image-upload-container');
     const insertMathButton = document.getElementById('insertMathButton');
     const darkModeText = document.getElementById('darkModeText');
     const solutionModeBtns = document.querySelectorAll('.solution-mode-btn');
+    
+    // Image Upload Elements
+    const imageInput = document.getElementById('imageInput');
+    const imagePreview = document.getElementById('imagePreview');
+    const imagePreviewContainer = document.getElementById('imagePreviewContainer');
+    const captureImageButton = document.getElementById('captureImageButton');
+    const processImageButton = document.getElementById('processImageButton');
+    const ocrResultContainer = document.getElementById('ocrResultContainer');
+    const extractedText = document.getElementById('extractedText');
+    const useExtractedTextButton = document.getElementById('useExtractedTextButton');
+    
+    // Camera elements
+    const cameraModal = document.getElementById('cameraModal');
+    const video = document.getElementById('video');
+    const canvas = document.getElementById('canvas');
+    const takePhotoButton = document.getElementById('takePhotoButton');
     
     // MathQuill elements
     let mathField;
@@ -45,6 +64,28 @@ document.addEventListener('DOMContentLoaded', function() {
     clearHistoryBtn.addEventListener('click', clearChatHistory);
     toggleMathButton.addEventListener('click', toggleMathInput);
     toggleDarkModeButton.addEventListener('click', toggleDarkMode);
+    toggleImageUploadButton.addEventListener('click', toggleImageUpload);
+    
+    // Image upload event listeners
+    if (imageInput) {
+        imageInput.addEventListener('change', handleImagePreview);
+    }
+    
+    if (processImageButton) {
+        processImageButton.addEventListener('click', processImage);
+    }
+    
+    if (useExtractedTextButton) {
+        useExtractedTextButton.addEventListener('click', useExtractedTextAsInput);
+    }
+    
+    if (captureImageButton) {
+        captureImageButton.addEventListener('click', openCamera);
+    }
+    
+    if (takePhotoButton) {
+        takePhotoButton.addEventListener('click', takePhoto);
+    }
     
     // Solution mode buttons event listeners
     solutionModeBtns.forEach(btn => {
@@ -417,5 +458,142 @@ document.addEventListener('DOMContentLoaded', function() {
         } catch (error) {
             console.error('Error:', error);
         }
+    }
+    
+    // Image and Camera Functions
+    
+    function toggleImageUpload() {
+        imageUploadContainer.classList.toggle('d-none');
+        
+        // Ẩn hộp nhập công thức toán học nếu đang mở
+        if (!mathInputContainer.classList.contains('d-none')) {
+            mathInputContainer.classList.add('d-none');
+            insertMathButton.classList.add('d-none');
+        }
+    }
+    
+    function handleImagePreview(e) {
+        const file = e.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                imagePreview.src = event.target.result;
+                imagePreviewContainer.classList.remove('d-none');
+                
+                // Ẩn kết quả OCR nếu đang hiển thị
+                ocrResultContainer.classList.add('d-none');
+            };
+            reader.readAsDataURL(file);
+        }
+    }
+    
+    async function processImage() {
+        const file = imageInput.files[0];
+        if (!file) {
+            alert('Vui lòng chọn một hình ảnh trước');
+            return;
+        }
+        
+        // Hiển thị overlay đang xử lý
+        processingImageOverlay.classList.remove('d-none');
+        
+        const formData = new FormData();
+        formData.append('image', file);
+        
+        try {
+            const response = await fetch('/upload_image', {
+                method: 'POST',
+                body: formData
+            });
+            
+            const data = await response.json();
+            
+            if (response.ok) {
+                // Hiển thị kết quả
+                extractedText.value = data.extracted_text;
+                ocrResultContainer.classList.remove('d-none');
+                
+                // Hiển thị ảnh đã xử lý
+                if (data.processed_image_b64) {
+                    const processedImg = `data:image/jpeg;base64,${data.processed_image_b64}`;
+                    imagePreview.src = processedImg;
+                }
+            } else {
+                alert(data.error || 'Có lỗi xảy ra khi xử lý ảnh');
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            alert('Không thể kết nối với máy chủ. Vui lòng thử lại sau.');
+        } finally {
+            processingImageOverlay.classList.add('d-none');
+        }
+    }
+    
+    function useExtractedTextAsInput() {
+        const text = extractedText.value.trim();
+        if (text) {
+            messageInput.value = text;
+            imageUploadContainer.classList.add('d-none');
+            messageInput.focus();
+        }
+    }
+    
+    function openCamera() {
+        // Khởi tạo camera
+        if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+            navigator.mediaDevices.getUserMedia({ video: true })
+                .then(function(stream) {
+                    video.srcObject = stream;
+                    // Hiển thị modal
+                    const modal = new bootstrap.Modal(cameraModal);
+                    modal.show();
+                    
+                    // Thêm sự kiện khi đóng modal
+                    cameraModal.addEventListener('hidden.bs.modal', function() {
+                        // Dừng camera khi đóng modal
+                        const stream = video.srcObject;
+                        if (stream) {
+                            const tracks = stream.getTracks();
+                            tracks.forEach(track => track.stop());
+                            video.srcObject = null;
+                        }
+                    }, { once: true });
+                })
+                .catch(function(error) {
+                    console.error('Không thể truy cập camera:', error);
+                    alert('Không thể truy cập camera. Vui lòng cho phép quyền truy cập camera hoặc sử dụng tính năng tải ảnh lên.');
+                });
+        } else {
+            alert('Trình duyệt của bạn không hỗ trợ truy cập camera. Vui lòng sử dụng tính năng tải ảnh lên.');
+        }
+    }
+    
+    function takePhoto() {
+        const context = canvas.getContext('2d');
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        context.drawImage(video, 0, 0, canvas.width, canvas.height);
+        
+        // Chuyển đổi ảnh thành dạng Blob
+        canvas.toBlob(function(blob) {
+            // Tạo file từ blob
+            const file = new File([blob], 'captured_image.jpg', { type: 'image/jpeg' });
+            
+            // Tạo FileList giả để gán cho input
+            const dataTransfer = new DataTransfer();
+            dataTransfer.items.add(file);
+            imageInput.files = dataTransfer.files;
+            
+            // Kích hoạt sự kiện change để hiển thị xem trước
+            const changeEvent = new Event('change', { bubbles: true });
+            imageInput.dispatchEvent(changeEvent);
+            
+            // Đóng modal
+            const modalElement = document.getElementById('cameraModal');
+            const modal = bootstrap.Modal.getInstance(modalElement);
+            if (modal) {
+                modal.hide();
+            }
+        }, 'image/jpeg', 0.95);
     }
 });

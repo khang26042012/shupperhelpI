@@ -1,5 +1,8 @@
 {pkgs}: {
   deps = [
+    pkgs.libGLU
+    pkgs.libGL
+    pkgs.tesseract
     pkgs.yakut
     pkgs.zip
     pkgs.zlib

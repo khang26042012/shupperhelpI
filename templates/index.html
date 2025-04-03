@@ -132,10 +132,59 @@
                                     <span id="mathPreview"></span>
                                 </div>
                             </div>
+                            
+                            <!-- Image Upload Container -->
+                            <div class="image-upload-container mb-2 d-none">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="mb-2">
+                                            <label for="imageInput" class="form-label text-muted">Chọn ảnh chứa bài toán:</label>
+                                            <input class="form-control" type="file" id="imageInput" accept="image/*">
+                                        </div>
+                                        <div class="d-grid gap-2">
+                                            <button id="captureImageButton" class="btn btn-primary" type="button">
+                                                <i class="fas fa-camera me-1"></i>Chụp ảnh
+                                            </button>
+                                            <button id="processImageButton" class="btn btn-success" type="button">
+                                                <i class="fas fa-magic me-1"></i>Trích xuất văn bản
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div id="imagePreviewContainer" class="image-preview-container d-none">
+                                            <p class="text-muted mb-1">Xem trước ảnh:</p>
+                                            <img id="imagePreview" class="img-fluid img-thumbnail" src="" alt="Xem trước ảnh">
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- OCR Result -->
+                                <div id="ocrResultContainer" class="ocr-result-container mt-3 d-none">
+                                    <div class="card">
+                                        <div class="card-header bg-success text-white">
+                                            <i class="fas fa-check-circle me-1"></i>Kết quả nhận dạng
+                                        </div>
+                                        <div class="card-body">
+                                            <div class="mb-3">
+                                                <label for="extractedText" class="form-label">Văn bản đã trích xuất:</label>
+                                                <textarea id="extractedText" class="form-control" rows="3" readonly></textarea>
+                                            </div>
+                                            <div class="d-grid">
+                                                <button id="useExtractedTextButton" class="btn btn-primary" type="button">
+                                                    <i class="fas fa-arrow-right me-1"></i>Dùng văn bản này
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                             <div class="d-flex justify-content-between align-items-center">
                                 <div class="d-flex align-items-center">
                                     <button id="toggleMathButton" type="button" class="btn btn-outline-secondary me-2">
                                         <i class="fas fa-square-root-alt me-1"></i>Công thức toán
+                                    </button>
+                                    <button id="toggleImageUploadButton" type="button" class="btn btn-outline-secondary me-2">
+                                        <i class="fas fa-camera me-1"></i>Tải ảnh lên
                                     </button>
                                     <button id="toggleDarkModeButton" type="button" class="btn btn-outline-secondary">
                                         <i class="fas fa-moon me-1"></i><span id="darkModeText">Chế độ tối</span>
@@ -170,6 +219,45 @@
             <span class="visually-hidden">Đang tải...</span>
         </div>
         <p class="mt-2 text-white">Đang tải câu trả lời...</p>
+    </div>
+    
+    <!-- Camera Modal -->
+    <div class="modal fade" id="cameraModal" tabindex="-1" aria-labelledby="cameraModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="cameraModalLabel">
+                        <i class="fas fa-camera me-2"></i>Chụp ảnh bài toán
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="camera-container">
+                        <div class="text-center mb-3">
+                            <p>Hãy đặt bài toán vào giữa khung hình và giữ ổn định</p>
+                        </div>
+                        <div class="video-container text-center">
+                            <video id="video" autoplay playsinline style="width: 100%; max-width: 640px; border: 2px solid #ccc; border-radius: 8px;"></video>
+                        </div>
+                        <canvas id="canvas" style="display:none;"></canvas>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                    <button type="button" class="btn btn-primary" id="takePhotoButton">
+                        <i class="fas fa-camera me-1"></i>Chụp ảnh
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Processing Image Overlay -->
+    <div id="processingImageOverlay" class="d-none">
+        <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Đang xử lý...</span>
+        </div>
+        <p class="mt-2 text-white">Đang xử lý ảnh và nhận dạng chữ...</p>
     </div>
 
     <!-- Bootstrap 5 JS Bundle -->

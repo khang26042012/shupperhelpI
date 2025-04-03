@@ -2,13 +2,17 @@ import os
 import logging
 import base64
 import io
+import cv2
+import numpy as np
+import pytesseract
+from PIL import Image
 from flask import Flask, render_template, request, jsonify, session, url_for, redirect
 from dotenv import load_dotenv
+from werkzeug.utils import secure_filename
 
 # Load environment variables from .env file
 load_dotenv()
 from utils.huggingface_api import get_ai_response, get_specialized_ai_response
-from PIL import Image
 
 # Set environment variables directly in code
 
@@ -122,8 +126,73 @@ def allowed_file(filename):
 
 @app.route('/upload_image', methods=['POST'])
 def upload_image():
-    """Lỗi: Tính năng tải ảnh đã bị loại bỏ."""
-    return jsonify({"error": "Chức năng tải ảnh lên đã bị loại bỏ do gặp lỗi"}), 400
+    """Tính năng tải ảnh và trích xuất chữ viết tay."""
+    try:
+        if 'image' not in request.files:
+            return jsonify({"error": "Không tìm thấy hình ảnh nào"}), 400
+        
+        file = request.files['image']
+        if file.filename == '':
+            return jsonify({"error": "Không có tên tệp"}), 400
+        
+        if file and allowed_file(file.filename):
+            # Lưu tệp tạm thời
+            filename = secure_filename(file.filename)
+            filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+            file.save(filepath)
+            
+            # Xử lý ảnh
+            # Đọc ảnh bằng OpenCV
+            image = cv2.imread(filepath)
+            
+            # Chuyển đổi ảnh sang độ xám
+            gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+            
+            # Tiền xử lý ảnh để cải thiện chất lượng nhận dạng
+            # Áp dụng GaussianBlur để giảm nhiễu
+            blur = cv2.GaussianBlur(gray, (5, 5), 0)
+            
+            # Áp dụng phân ngưỡng để tạo ảnh nhị phân
+            _, binary = cv2.threshold(blur, 0, 255, cv2.THRESH_BINARY_INV + cv2.THRESH_OTSU)
+            
+            # Sử dụng pytesseract để nhận dạng chữ
+            # Đặt config để nhận dạng cả chữ Việt và chữ số
+            custom_config = r'--oem 3 --psm 6'
+            
+            try:
+                # Thử nhận dạng với pytesseract
+                extracted_text = pytesseract.image_to_string(binary, config=custom_config, lang='vie+eng')
+            except Exception as e:
+                logger.error(f"Lỗi khi nhận dạng văn bản: {str(e)}")
+                # Thử nhận dạng không có lang nếu gặp lỗi
+                extracted_text = pytesseract.image_to_string(binary, config=custom_config)
+            
+            # Tiền xử lý văn bản đã trích xuất
+            extracted_text = extracted_text.strip()
+            
+            # Lưu ảnh đã xử lý để debug
+            processed_filename = f"processed_{filename}"
+            processed_filepath = os.path.join(app.config['UPLOAD_FOLDER'], processed_filename)
+            cv2.imwrite(processed_filepath, binary)
+            
+            # Mã hóa ảnh đã xử lý để gửi về client
+            _, buffer = cv2.imencode('.jpg', binary)
+            processed_image_b64 = base64.b64encode(buffer).decode('utf-8')
+            
+            # Trả về kết quả
+            return jsonify({
+                "status": "success",
+                "extracted_text": extracted_text,
+                "original_image": url_for('static', filename=f'uploads/{filename}'),
+                "processed_image": url_for('static', filename=f'uploads/{processed_filename}'),
+                "processed_image_b64": processed_image_b64
+            }), 200
+        else:
+            return jsonify({"error": "Định dạng tệp không được hỗ trợ"}), 400
+    
+    except Exception as e:
+        logger.error(f"Lỗi khi xử lý ảnh: {str(e)}")
+        return jsonify({"error": f"Đã xảy ra lỗi khi xử lý ảnh: {str(e)}"}), 500
 
 @app.route('/clear_history', methods=['POST'])
 def clear_history():
