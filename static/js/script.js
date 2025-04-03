@@ -1,3 +1,4 @@
+
 document.addEventListener('DOMContentLoaded', function() {
     // DOM Elements
     const chatArea = document.getElementById('chatArea');
@@ -56,6 +57,10 @@ document.addEventListener('DOMContentLoaded', function() {
             if (response.ok) {
                 // Display bot response
                 addMessage(data.response, 'bot');
+                // Render math after adding message
+                if (window.MathJax) {
+                    MathJax.typesetPromise();
+                }
             } else {
                 // Display error
                 const errorMsg = data.error || 'Đã xảy ra lỗi khi gửi tin nhắn.';
@@ -110,13 +115,17 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
 
+        // Wrap math expressions in proper delimiters
+        formattedText = formattedText.replace(/\$\$(.*?)\$\$/g, '\\[$1\\]');
+        formattedText = formattedText.replace(/\$(.*?)\$/g, '\\($1\\)');
+
         messageDiv.innerHTML = `
             <div class="message-content">
                 <div class="message-avatar">
                     <i class="${iconClass}"></i>
                 </div>
                 <div class="message-text">
-                    <p>${formatMessage(formattedText)}</p>
+                    ${formatMessage(formattedText)}
                     ${explanationSection}
                     <div class="message-time">${timestamp}</div>
                 </div>
@@ -140,6 +149,11 @@ document.addEventListener('DOMContentLoaded', function() {
                     }
                 });
             }
+        }
+
+        // Render math expressions
+        if (window.MathJax) {
+            MathJax.typesetPromise();
         }
 
         scrollToBottom();
