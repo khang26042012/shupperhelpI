@@ -130,6 +130,9 @@ document.addEventListener('DOMContentLoaded', function() {
         } catch (error) {
             console.error('Error sending message:', error);
             addErrorMessage('Không thể kết nối với máy chủ. Vui lòng thử lại sau.');
+
+            // Ẩn loading overlay trong trường hợp lỗi
+            loadingOverlay.classList.add('d-none');
         } finally {
             // Hide loading overlay
             loadingOverlay.classList.add('d-none');
@@ -311,17 +314,25 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Update active button styling
         subjectButtons.forEach(button => {
-            if (button.getAttribute('data-subject') === subject) {
-                button.classList.add('active');
-            } else {
-                button.classList.remove('active');
-            }
-        });
-    }
+            if (button.getAttribute('data-subject') === sub// Khởi tạo các biến và elements
+const chatArea = document.getElementById('chatArea');
+const messageForm = document.getElementById('messageForm');
+const messageInput = document.getElementById('messageInput');
+const sendButton = document.getElementById('sendButton');
+const loadingOverlay = document.getElementById('loadingOverlay');
+const currentModeDisplay = document.getElementById('currentModeDisplay');
+const currentSubjectDisplay = document.getElementById('currentSubjectDisplay');
 
-    /**
-     * Handle image upload from file input
-     */
+// Biến lưu trữ trạng thái
+let currentMode = 'trợ lý';
+let currentSubject = 'Toán';
+
+// Xử lý gửi tin nhắn
+messageForm.addEventListener('submit', handleMessageSubmit);
+
+/**
+ * Handle image upload from file input
+ */
     function handleImageUpload() {
         if (imageFileInput.files && imageFileInput.files[0]) {
             const file = imageFileInput.files[0];
