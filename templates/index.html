@@ -20,6 +20,14 @@
     </script>
     <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
     <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    
+    <!-- MathQuill Configuration -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/mathquill/0.10.1/mathquill.min.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mathquill/0.10.1/mathquill.min.js"></script>
+    <script>
+        var MQ = MathQuill.getInterface(2);
+    </script>
 
 
     <!-- Bootstrap 5 CSS -->
@@ -101,8 +109,27 @@
                                         placeholder="Nhập câu hỏi của bạn ở đây..." 
                                         rows="3"></textarea>
                             </div>
-                            <div class="d-flex justify-content-end align-items-center">
+                            <div class="math-input-container mb-2 d-none">
+                                <span id="mathInputLabel" class="text-muted mb-1">Nhập công thức toán học:</span>
+                                <div id="mathInput" class="form-control math-field"></div>
+                                <div class="math-preview mt-1">
+                                    <span class="text-muted me-2">Xem trước:</span>
+                                    <span id="mathPreview"></span>
+                                </div>
+                            </div>
+                            <div class="d-flex justify-content-between align-items-center">
                                 <div class="d-flex align-items-center">
+                                    <button id="toggleMathButton" type="button" class="btn btn-outline-secondary me-2">
+                                        <i class="fas fa-square-root-alt me-1"></i>Công thức toán
+                                    </button>
+                                    <button id="toggleDarkModeButton" type="button" class="btn btn-outline-secondary">
+                                        <i class="fas fa-moon me-1"></i><span id="darkModeText">Chế độ tối</span>
+                                    </button>
+                                </div>
+                                <div class="d-flex align-items-center">
+                                    <button id="insertMathButton" class="btn btn-secondary me-2 d-none" type="button">
+                                        <i class="fas fa-plus me-1"></i>Chèn công thức
+                                    </button>
                                     <button id="sendButton" class="btn btn-primary" type="submit">
                                         <i class="fas fa-paper-plane me-1"></i>Gửi
                                     </button>

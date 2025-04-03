@@ -5,6 +5,34 @@
     --dark-color: #343a40;
     --user-msg-bg: #e3f2fd;
     --bot-msg-bg: #f5f5f5;
+    
+    /* Các biến màu sắc cho giao diện sáng */
+    --bg-color: #f0f2f5;
+    --card-bg: #ffffff;
+    --text-color: #212529;
+    --navbar-bg: #ffffff;
+    --input-bg: #ffffff;
+    --input-border: #ddd;
+    --input-text: #212529;
+    --chat-area-bg: #fbfbfb;
+    --footer-bg: #343a40;
+    --footer-text: #ffffff;
+}
+
+/* Chế độ tối */
+.dark-mode {
+    --bg-color: #1a1a1a;
+    --card-bg: #2d2d2d;
+    --text-color: #e0e0e0;
+    --navbar-bg: #252525;
+    --input-bg: #3a3a3a;
+    --input-border: #555;
+    --input-text: #e0e0e0;
+    --chat-area-bg: #2d2d2d;
+    --user-msg-bg: #4056a1;
+    --bot-msg-bg: #3a3a3a;
+    --footer-bg: #222222;
+    --footer-text: #e0e0e0;
 }
 
 @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap');
@@ -331,6 +359,87 @@ footer {
     box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
 }
 
+/* Styling cho MathQuill */
+.math-input-container {
+    background-color: var(--input-bg);
+    border-radius: 10px;
+    padding: 10px;
+    margin-bottom: 15px;
+    border: 1px solid var(--input-border);
+}
+
+#mathInput {
+    min-height: 50px;
+    margin: 10px 0;
+    border: 1px solid var(--input-border);
+    background-color: var(--input-bg);
+}
+
+.math-preview {
+    margin-top: 10px;
+    padding: 10px;
+    background-color: rgba(0,0,0,0.05);
+    border-radius: 8px;
+}
+
+.dark-mode .math-preview {
+    background-color: rgba(255,255,255,0.1);
+}
+
+/* Chế độ tối */
+.dark-mode {
+    background-color: var(--bg-color);
+    color: var(--text-color);
+}
+
+.dark-mode .navbar {
+    background-color: var(--navbar-bg) !important;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+}
+
+.dark-mode .card {
+    background-color: var(--card-bg);
+    border: 1px solid rgba(255,255,255,0.1);
+}
+
+.dark-mode .chat-area {
+    background-color: var(--chat-area-bg);
+}
+
+.dark-mode .card-footer {
+    background-color: var(--card-bg) !important;
+    border-top: 1px solid rgba(255,255,255,0.1);
+}
+
+.dark-mode #messageInput {
+    background-color: var(--input-bg);
+    border: 1px solid var(--input-border);
+    color: var(--input-text);
+}
+
+.dark-mode .message-text pre {
+    background-color: rgba(255,255,255,0.1);
+}
+
+.dark-mode footer {
+    background-color: var(--footer-bg);
+    color: var(--footer-text);
+}
+
+.dark-mode .message-time {
+    color: #888;
+}
+
+.dark-mode .btn-outline-secondary {
+    border-color: #666;
+    color: #ddd;
+}
+
+.dark-mode .btn-outline-secondary:hover {
+    background-color: #666;
+    color: white;
+}
+
 /* Responsive design */
 @media (max-width: 768px) {
     .chat-area {
@@ -349,5 +458,14 @@ footer {
     
     .nav-item {
         margin: 5px;
+    }
+    
+    .math-input-container {
+        padding: 8px;
+    }
+    
+    #toggleMathButton, #toggleDarkModeButton {
+        font-size: 0.85rem;
+        padding: 5px 8px;
     }
 }

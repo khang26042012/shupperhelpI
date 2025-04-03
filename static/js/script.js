@@ -5,13 +5,39 @@ document.addEventListener('DOMContentLoaded', function() {
     const messageInput = document.getElementById('messageInput');
     const loadingOverlay = document.getElementById('loadingOverlay');
     const clearHistoryBtn = document.getElementById('clearHistoryBtn');
+    const toggleMathButton = document.getElementById('toggleMathButton');
+    const toggleDarkModeButton = document.getElementById('toggleDarkModeButton');
+    const mathInputContainer = document.querySelector('.math-input-container');
+    const insertMathButton = document.getElementById('insertMathButton');
+    const darkModeText = document.getElementById('darkModeText');
+    
+    // MathQuill elements
+    let mathField;
+    let mathPreview = document.getElementById('mathPreview');
+
+    // Dark mode state
+    let isDarkMode = false;
+    
+    // Kiểm tra localStorage cho chế độ tối
+    if (localStorage.getItem('darkMode') === 'enabled') {
+        enableDarkMode();
+    }
 
     // Initialize chat
     initializeChat();
 
+    // Initialize MathQuill
+    initializeMathQuill();
+
     // Event listeners
     messageForm.addEventListener('submit', handleMessageSubmit);
     clearHistoryBtn.addEventListener('click', clearChatHistory);
+    toggleMathButton.addEventListener('click', toggleMathInput);
+    toggleDarkModeButton.addEventListener('click', toggleDarkMode);
+    
+    if (insertMathButton) {
+        insertMathButton.addEventListener('click', insertMathExpression);
+    }
 
     // Allow pressing Enter to send message (Shift+Enter for new line)
     messageInput.addEventListener('keydown', function(e) {
@@ -20,6 +46,73 @@ document.addEventListener('DOMContentLoaded', function() {
             handleMessageSubmit(e);
         }
     });
+    
+    function initializeMathQuill() {
+        const mathInputEl = document.getElementById('mathInput');
+        if (mathInputEl) {
+            mathField = MQ.MathField(mathInputEl, {
+                spaceBehavesLikeTab: true,
+                handlers: {
+                    edit: function() {
+                        const latex = mathField.latex();
+                        updateMathPreview(latex);
+                    }
+                }
+            });
+        }
+    }
+    
+    function updateMathPreview(latex) {
+        if (mathPreview) {
+            mathPreview.innerHTML = '\\(' + latex + '\\)';
+            if (window.MathJax) {
+                MathJax.typesetPromise([mathPreview]);
+            }
+        }
+    }
+    
+    function toggleMathInput() {
+        mathInputContainer.classList.toggle('d-none');
+        insertMathButton.classList.toggle('d-none');
+        
+        if (!mathInputContainer.classList.contains('d-none')) {
+            if (mathField) {
+                setTimeout(() => mathField.focus(), 100);
+            }
+        }
+    }
+    
+    function insertMathExpression() {
+        if (mathField) {
+            const latex = mathField.latex();
+            messageInput.value += ' $' + latex + '$ ';
+            mathInputContainer.classList.add('d-none');
+            insertMathButton.classList.add('d-none');
+            messageInput.focus();
+        }
+    }
+    
+    function toggleDarkMode() {
+        if (isDarkMode) {
+            disableDarkMode();
+        } else {
+            enableDarkMode();
+        }
+    }
+    
+    function enableDarkMode() {
+        document.body.classList.add('dark-mode');
+        darkModeText.textContent = 'Chế độ sáng';
+        isDarkMode = true;
+        localStorage.setItem('darkMode', 'enabled');
+    }
+    
+    function disableDarkMode() {
+        document.body.classList.remove('dark-mode');
+        darkModeText.textContent = 'Chế độ tối';
+        isDarkMode = false;
+        localStorage.setItem('darkMode', 'disabled');
+    }
 
     async function handleMessageSubmit(e) {
         e.preventDefault();
