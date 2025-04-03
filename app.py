@@ -162,8 +162,18 @@ def upload_image():
             optimized_filepath = os.path.join(app.config['UPLOAD_FOLDER'], optimized_filename)
             cv2.imwrite(optimized_filepath, optimized)
             
-            # Lấy full URL của ảnh cho API Gemini (phải là URL public)
-            full_image_url = request.host_url.rstrip('/') + image_url
+            # Lấy full URL của ảnh cho API Gemini (phải là URL public cho Gemini API)
+            # Cần đảm bảo đường dẫn không bị trùng lặp domain
+            image_path = image_url.replace(request.host_url.rstrip('/'), '')
+            if image_path.startswith('/'):
+                image_path = image_path[1:]
+            full_image_url = request.host_url.rstrip('/') + '/' + image_path
+            
+            # Ghi log để debug
+            logger.debug(f"Host URL: {request.host_url}")
+            logger.debug(f"Image URL: {image_url}")
+            logger.debug(f"Image path: {image_path}")
+            logger.debug(f"Full image URL: {full_image_url}")
 
             # Tạo prompt mô tả cho AI
             prompt = f"Đây là ảnh chụp bài toán. Hãy giải bài toán này. Nếu không thấy rõ ảnh, hãy thông báo."

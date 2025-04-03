@@ -591,6 +591,13 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     function openCamera() {
+        // Kiểm tra xem các phần tử DOM đã tồn tại chưa
+        if (!video || !cameraModal) {
+            console.error('Không tìm thấy các phần tử video hoặc cameraModal');
+            alert('Không thể khởi tạo camera. Vui lòng sử dụng tính năng tải ảnh lên.');
+            return;
+        }
+        
         // Khởi tạo camera
         if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
             navigator.mediaDevices.getUserMedia({ video: true })
@@ -621,6 +628,13 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     function takePhoto() {
+        // Kiểm tra xem các thành phần DOM đã tồn tại chưa
+        if (!canvas || !video || !imageInput) {
+            console.error('Không tìm thấy các phần tử cần thiết để chụp ảnh');
+            alert('Không thể chụp ảnh. Vui lòng sử dụng tính năng tải ảnh lên.');
+            return;
+        }
+        
         const context = canvas.getContext('2d');
         canvas.width = video.videoWidth;
         canvas.height = video.videoHeight;
@@ -642,14 +656,18 @@ document.addEventListener('DOMContentLoaded', function() {
             
             // Đóng modal
             const modalElement = document.getElementById('cameraModal');
-            const modal = bootstrap.Modal.getInstance(modalElement);
-            if (modal) {
-                modal.hide();
+            if (modalElement) {
+                const modal = bootstrap.Modal.getInstance(modalElement);
+                if (modal) {
+                    modal.hide();
+                }
             }
             
             // Tự động xử lý ảnh sau khi chụp
             setTimeout(() => {
-                processImage();
+                if (typeof processImage === 'function') {
+                    processImage();
+                }
             }, 500);
         }, 'image/jpeg', 0.95);
     }
