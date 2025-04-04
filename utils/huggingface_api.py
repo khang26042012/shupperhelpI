@@ -51,7 +51,7 @@ def get_ai_response(prompt: str, context: Optional[str] = None, image_url: Optio
             
         if not api_key:
             logger.error("API key not found in app config or environment")
-            return "Lỗi xác thực API. Vui lòng nhập API key trong trang cài đặt."
+            return "Không thể kết nối với Google AI API. Vui lòng kiểm tra kết nối mạng hoặc thử lại sau. Nếu lỗi vẫn tiếp tục, hãy nhập lại API key trong trang cài đặt bằng cách truy cập /api_key"
         
         # Prepare prompt with context if available
         full_prompt = prompt

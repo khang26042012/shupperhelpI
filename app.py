@@ -30,9 +30,9 @@ logger.debug("Setting app config")
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max upload size
 logger.debug("Setting app config")
 app.config['UPLOAD_FOLDER'] = os.path.join('static', 'uploads')
-# Đặt API key từ biến môi trường hoặc dùng key mặc định
+# Đặt API key từ biến môi trường và xóa key mặc định
 logger.debug("Setting app config")
-app.config['GOOGLE_AI_API_KEY'] = os.environ.get('GOOGLE_AI_API_KEY', "AIzaSyBN0yBx3BRSJeuHxglNqbG4qfBor9grnKk")
+app.config['GOOGLE_AI_API_KEY'] = os.environ.get('GOOGLE_AI_API_KEY')
 logger.debug("Setting app config")
 app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 31536000  # 1 năm cache cho static files
 
