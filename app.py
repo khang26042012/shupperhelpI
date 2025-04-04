@@ -1,3 +1,4 @@
+import time
 import os
 import logging
 import base64
@@ -65,19 +66,30 @@ def set_api_key():
 @app.route('/')
 def index():
     """Render the main page of the application."""
-    # Initialize chat history if not present
-    if 'chat_history' not in session:
-        session['chat_history'] = []
-    
-    # Check if API key is set, if not redirect to set API key page
-    if not app.config['GOOGLE_AI_API_KEY'] and 'google_ai_api_key' not in session:
-        return redirect(url_for('set_api_key'))
-    
-    # Use session API key if available
-    if 'google_ai_api_key' in session:
-        app.config['GOOGLE_AI_API_KEY'] = session['google_ai_api_key']
-    
-    return render_template('index.html')
+    try:
+        # Đảm bảo thư mục uploads tồn tại
+        os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
+        
+        # Initialize chat history if not present
+        if 'chat_history' not in session:
+            session['chat_history'] = []
+        
+        # Check if API key is set, if not redirect to set API key page
+        if not app.config['GOOGLE_AI_API_KEY'] and 'google_ai_api_key' not in session:
+            logger.info("API key not set, redirecting to API key page")
+            return redirect(url_for('set_api_key'))
+        
+        # Use session API key if available
+        if 'google_ai_api_key' in session:
+            app.config['GOOGLE_AI_API_KEY'] = session['google_ai_api_key']
+        
+        # Cache busting cho phát triển
+        no_cache = int(time.time())
+        logger.info("Rendering index page")
+        return render_template('index.html', no_cache=no_cache)
+    except Exception as e:
+        logger.error(f"Error in index route: {str(e)}")
+        return render_template('error.html', error=str(e))
 
 @app.route('/send_message', methods=['POST'])
 def send_message():

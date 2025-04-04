@@ -493,7 +493,15 @@ window.addEventListener('DOMContentLoaded', function() {
     }
 
     function initializeChat() {
-        scrollToBottom();
+        console.log("Initializing chat...");
+        if (chatArea) {
+            // Hiển thị tin nhắn chào mừng khi khởi động ứng dụng
+            const welcomeMessage = "Xin chào! Tôi là trợ lý AI học tập. Bạn có thể hỏi tôi bất cứ câu hỏi nào hoặc tải ảnh lên để tôi giải đáp.";
+            addMessage(welcomeMessage, 'bot');
+            scrollToBottom();
+        } else {
+            console.warn("Chat area not found during initialization");
+        }
     }
 
     async function clearChatHistory() {
@@ -825,5 +833,13 @@ window.addEventListener('DOMContentLoaded', function() {
             console.error('Lỗi khi chụp ảnh:', error);
             alert('Đã xảy ra lỗi khi chụp ảnh. Vui lòng thử lại hoặc sử dụng tính năng tải ảnh lên.');
         }
+    }
+});
+// Ẩn màn hình loading khi tất cả nội dung đã tải xong
+window.addEventListener('load', function() {
+    console.log("Window fully loaded, hiding page loading indicator");
+    const pageLoading = document.getElementById('pageLoading');
+    if (pageLoading) {
+        pageLoading.style.display = 'none';
     }
 });
