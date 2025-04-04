@@ -1,125 +1,74 @@
-$(document).ready(function() {
-    // Constants and Elements
+document.addEventListener("DOMContentLoaded", function() {
+    // DOM elements
+    const chatForm = document.getElementById("chat-form");
     const chatArea = document.getElementById("chat-area");
-    const messageForm = document.getElementById("message-form");
-    const userInput = document.getElementById("user-input");
-    const modeSelect = document.getElementById("mode-select");
-    const subjectSelect = document.getElementById("subject-select");
-    const solutionModeButtons = document.querySelectorAll(".solution-mode-btn");
+    const messageInput = document.getElementById("message-input");
+    const sendButton = document.getElementById("send-button");
+    const loadingOverlay = document.getElementById("loadingOverlay");
     const mathInput = document.getElementById("math-input");
     const mathPreview = document.getElementById("math-preview");
-    const darkModeToggle = document.getElementById("dark-mode-toggle");
-    const uploadForm = document.getElementById("upload-form");
-    const imageInput = document.getElementById("image-input");
-    const imagePreview = document.getElementById("image-preview");
-    const imagePreviewContainer = document.getElementById("image-preview-container");
-    const clearPreviewButton = document.getElementById("clear-preview");
-    const progressBar = document.getElementById("progress-bar");
-    const progressContainer = document.getElementById("progress-container");
-    const processImageButton = document.getElementById("process-image");
-    const aiResponseModal = document.getElementById("ai-response-modal");
-    const aiResponseContent = document.getElementById("ai-response-content");
-    const originalImage = document.getElementById("original-image");
-    const optimizedImage = document.getElementById("optimized-image");
-    const imageUploadButton = document.getElementById("image-upload-button");
-    const subjectLabel = document.getElementById("subject-label");
-    const modeLabel = document.getElementById("mode-label");
-    const solutionModeLabel = document.getElementById("solution-mode-label");
-    const solutionModeContainer = document.getElementById("solution-mode-container");
-
-    // Dark Mode
-    let isDarkMode = localStorage.getItem('darkMode') === 'enabled';
+    const insertMathButton = document.getElementById("insertMathButton");
+    const toggleMathButton = document.getElementById("toggleMathButton");
+    const toggleImageButton = document.getElementById("toggleImageButton");
+    const imageInput = document.getElementById("imageInput");
+    const imagePreview = document.getElementById("imagePreview");
+    const imagePreviewContainer = document.getElementById("imagePreviewContainer");
+    const removeImageButton = document.getElementById("removeImageButton");
+    const processImageButton = document.getElementById("processImageButton");
+    const toggleDarkModeButton = document.getElementById("toggleDarkModeButton");
+    const cameraTrigger = document.getElementById("openCameraButton");
+    const closeStreamButton = document.getElementById("closeStreamButton");
+    const takePhotoButton = document.getElementById("takePhotoButton");
+    const cameraFeed = document.getElementById("cameraFeed");
+    const cameraCanvas = document.getElementById("cameraCanvas");
+    let mathField;
+    let stream = null;
     
-    // Solution Mode
-    let currentSolutionMode = "full"; // Default: full solution
+    // Get solution mode buttons
+    const solutionModeButtons = document.querySelectorAll('.solution-mode-btn');
+    let currentSolutionMode = 'full'; // Default mode
     
-    // Initialization
-    (function initialize() {
-        // Update initial state
-        updateSolutionModeButtons(currentSolutionMode);
-        
-        // Initialize MathQuill if needed
-        if (mathInput) {
-            initializeMathQuill();
-        }
-        
-        // Check dark mode
-        if (isDarkMode) {
-            enableDarkMode();
-        } else {
-            disableDarkMode();
-        }
-        
-        // Initialize chat area
-        initializeChat();
-        
-        // Hide loading indicator when window is fully loaded
-        window.addEventListener('load', function() {
-            console.log("Window fully loaded, hiding page loading indicator");
-            const pageLoading = document.getElementById('page-loading');
-            if (pageLoading) {
-                pageLoading.style.display = 'none';
-            }
-        });
-    })();
+    // Subject options
+    const subjectSelect = document.getElementById("subject-select");
+    const modeSelect = document.getElementById("mode-select");
+    const subjectOptions = document.getElementById("subject-options");
+    const modeOptions = document.getElementById("mode-options");
     
-    // Event Listeners
-    if (messageForm) {
-        messageForm.addEventListener("submit", handleMessageSubmit);
+    // Check for dark mode preference
+    const isDarkMode = localStorage.getItem('darkMode') === 'true';
+    
+    // Initialize when DOM is loaded
+    if (chatForm) {
+        chatForm.addEventListener("submit", handleMessageSubmit);
+    } else {
+        console.warn("Chat form not found");
     }
     
-    if (solutionModeButtons.length > 0) {
-        solutionModeButtons.forEach(button => {
-            button.addEventListener("click", function() {
-                const mode = this.getAttribute("data-mode");
-                currentSolutionMode = mode;
-                updateSolutionModeButtons(mode);
-            });
-        });
+    if (toggleMathButton) {
+        toggleMathButton.addEventListener("click", toggleMathInput);
     }
     
-    if (modeSelect) {
-        modeSelect.addEventListener("change", function() {
-            const mode = this.value;
-            // Hiển thị hoặc ẩn solution mode tùy thuộc vào chế độ
-            if (mode === "giải bài tập") {
-                solutionModeContainer.style.display = "block";
-                solutionModeLabel.style.display = "block";
-            } else {
-                solutionModeContainer.style.display = "none";
-                solutionModeLabel.style.display = "none";
-            }
-        });
-        
-        // Kích hoạt ngay để cập nhật UI
-        modeSelect.dispatchEvent(new Event('change'));
+    if (insertMathButton) {
+        insertMathButton.addEventListener("click", insertMathExpression);
     }
     
-    if (document.getElementById("toggle-math-button")) {
-        document.getElementById("toggle-math-button").addEventListener("click", toggleMathInput);
+    if (toggleDarkModeButton) {
+        toggleDarkModeButton.addEventListener("click", toggleDarkMode);
     }
     
-    if (document.getElementById("insert-math-button")) {
-        document.getElementById("insert-math-button").addEventListener("click", insertMathExpression);
-    }
-    
-    if (document.getElementById("toggleDarkModeButton")) {
-        document.getElementById("toggleDarkModeButton").addEventListener("click", toggleDarkMode);
-    }
-    
-    if (imageUploadButton) {
-        imageUploadButton.addEventListener("click", toggleImageUpload);
+    if (toggleImageButton) {
+        toggleImageButton.addEventListener("click", toggleImageUpload);
     }
     
     if (imageInput) {
         imageInput.addEventListener("change", handleImagePreview);
     }
     
-    if (clearPreviewButton) {
-        clearPreviewButton.addEventListener("click", function() {
+    if (removeImageButton) {
+        removeImageButton.addEventListener("click", function() {
             imagePreview.src = "";
-            imagePreviewContainer.classList.add("d-none");
             imageInput.value = "";
+            imagePreviewContainer.classList.add("d-none");
         });
     }
     
@@ -127,59 +76,96 @@ $(document).ready(function() {
         processImageButton.addEventListener("click", processImage);
     }
     
-    if (document.getElementById("open-camera-button")) {
-        document.getElementById("open-camera-button").addEventListener("click", openCamera);
+    if (cameraTrigger) {
+        cameraTrigger.addEventListener("click", openCamera);
     }
     
-    if (document.getElementById("capture-photo")) {
-        document.getElementById("capture-photo").addEventListener("click", takePhoto);
+    if (closeStreamButton) {
+        closeStreamButton.addEventListener("click", function() {
+            if (stream) {
+                stream.getTracks().forEach(track => track.stop());
+                cameraFeed.srcObject = null;
+            }
+            document.getElementById("cameraControls").classList.add("d-none");
+        });
     }
     
-    // Functions
+    if (takePhotoButton) {
+        takePhotoButton.addEventListener("click", takePhoto);
+    }
+    
+    // Initialize MathQuill if needed
+    if (mathInput) {
+        initializeMathQuill();
+    }
+    
+    // Check dark mode
+    if (isDarkMode) {
+        enableDarkMode();
+    } else {
+        disableDarkMode();
+    }
+    
+    // Initialize chat area
+    initializeChat();
+    
+    // Hide loading indicator when window is fully loaded
+    window.addEventListener('load', function() {
+        console.log("Window fully loaded, hiding page loading indicator");
+        const pageLoading = document.getElementById('page-loading');
+        if (pageLoading) {
+            pageLoading.style.display = 'none';
+        }
+    });
+    
+    // Set up solution mode buttons
+    solutionModeButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            const mode = this.getAttribute('data-mode');
+            currentSolutionMode = mode;
+            updateSolutionModeButtons(mode);
+        });
+    });
+    
+    // Initialize solution mode buttons
+    updateSolutionModeButtons(currentSolutionMode);
+    
     function updateSolutionModeButtons(mode) {
-        solutionModeButtons.forEach(button => {
-            const buttonMode = button.getAttribute("data-mode");
-            if (buttonMode === mode) {
-                button.classList.add("active");
+        solutionModeButtons.forEach(btn => {
+            if (btn.getAttribute('data-mode') === mode) {
+                btn.classList.add('active');
             } else {
-                button.classList.remove("active");
+                btn.classList.remove('active');
             }
         });
     }
     
     function initializeMathQuill() {
-        try {
-            var MQ = MathQuill.getInterface(2);
-            var mathField = MQ.MathField(mathInput, {
-                spaceBehavesLikeTab: true,
-                handlers: {
-                    edit: function() {
-                        const latex = mathField.latex();
-                        updateMathPreview(latex);
-                    }
+        const mathInputField = document.getElementById("math-input-field");
+        if (!mathInputField) return;
+        
+        mathField = MQ.MathField(mathInputField, {
+            spaceBehavesLikeTab: true,
+            handlers: {
+                edit: function() {
+                    updateMathPreview(mathField.latex());
                 }
-            });
-            
-            // Ensure we update the preview immediately
-            updateMathPreview(mathField.latex());
-        } catch (e) {
-            console.error("MathQuill initialization error:", e);
-        }
+            }
+        });
     }
     
     function updateMathPreview(latex) {
-        try {
-            if (mathPreview) {
-                // Cập nhật thẻ span với mã LaTeX để MathJax hiển thị
-                mathPreview.textContent = '\\(' + latex + '\\)';
-                
-                // Nếu MathJax đã tải, kích hoạt render
-                if (typeof MathJax !== 'undefined') {
-                    MathJax.typesetPromise([mathPreview]).catch(err => console.error("MathJax error:", err));
-                }
+        if (mathPreview) {
+            mathPreview.textContent = latex;
+            
+            try {
+                // Use KaTeX to render the preview
+                katex.render(latex, mathPreview, {
+                    throwOnError: false
+                });
+            } catch (e) {
+                mathPreview.textContent = "Lỗi hiển thị công thức: " + e.message;
             }
-        } catch (e) {
-            console.error("Error updating math preview:", e);
         }
     }
     
@@ -187,205 +173,267 @@ $(document).ready(function() {
         const mathInputContainer = document.getElementById("math-input-container");
         if (mathInputContainer.classList.contains("d-none")) {
             mathInputContainer.classList.remove("d-none");
+            insertMathButton.classList.remove("d-none");
+            setTimeout(() => {
+                if (mathField) {
+                    mathField.focus();
+                }
+            }, 100);
         } else {
             mathInputContainer.classList.add("d-none");
+            insertMathButton.classList.add("d-none");
         }
     }
     
     function insertMathExpression() {
-        try {
-            const latex = document.getElementById("math-input").getAttribute("data-latex") || "";
-            if (latex && userInput) {
-                const cursorPos = userInput.selectionStart;
-                const textBefore = userInput.value.substring(0, cursorPos);
-                const textAfter = userInput.value.substring(cursorPos);
-                
-                // Format for LaTeX: use $$ delimiters
-                userInput.value = textBefore + " $$" + latex + "$$ " + textAfter;
-                
-                // Reset math input and close container
-                document.getElementById("math-input-container").classList.add("d-none");
-                
-                // Set focus back to the message input
-                userInput.focus();
-                userInput.selectionStart = userInput.selectionEnd = cursorPos + latex.length + 5; // +5 for the $$ delimiters and spaces
-            }
-        } catch (e) {
-            console.error("Error inserting math expression:", e);
+        if (mathField && messageInput) {
+            const latex = mathField.latex();
+            const cursorPos = messageInput.selectionStart;
+            const textBefore = messageInput.value.substring(0, cursorPos);
+            const textAfter = messageInput.value.substring(cursorPos);
+            
+            // Insert LaTeX surrounded by dollar signs
+            messageInput.value = textBefore + " $" + latex + "$ " + textAfter;
+            
+            // Update cursor position to be after the inserted equation
+            const newPosition = cursorPos + latex.length + 3; // +3 for the space and dollar signs
+            messageInput.selectionStart = newPosition;
+            messageInput.selectionEnd = newPosition;
+            messageInput.focus();
+            
+            // Hide math input after inserting
+            document.getElementById("math-input-container").classList.add("d-none");
+            insertMathButton.classList.add("d-none");
         }
     }
     
     function toggleDarkMode() {
-        if (isDarkMode) {
+        const isDarkModeEnabled = localStorage.getItem('darkMode') === 'true';
+        
+        if (isDarkModeEnabled) {
             disableDarkMode();
-            isDarkMode = false;
-            localStorage.setItem('darkMode', 'disabled');
+            localStorage.setItem('darkMode', 'false');
         } else {
             enableDarkMode();
-            isDarkMode = true;
-            localStorage.setItem('darkMode', 'enabled');
+            localStorage.setItem('darkMode', 'true');
         }
     }
     
     function enableDarkMode() {
         document.body.classList.add('dark-mode');
-        // Cập nhật icon và text
-        const darkModeText = document.getElementById('darkModeText');
-        if (darkModeText) {
-            darkModeText.textContent = 'Chế độ sáng';
-        }
-        // Thay đổi icon từ mặt trăng sang mặt trời
-        const darkModeIcon = document.querySelector('#toggleDarkModeButton i');
-        if (darkModeIcon) {
-            darkModeIcon.className = 'fas fa-sun me-1';
+        document.querySelectorAll('.card, .navbar, .btn-outline-secondary, .form-control, .form-select').forEach(el => {
+            el.classList.add('dark-element');
+        });
+        
+        if (toggleDarkModeButton) {
+            toggleDarkModeButton.innerHTML = '<i class="fas fa-sun me-1"></i><span id="darkModeText">Chế độ sáng</span>';
         }
     }
     
     function disableDarkMode() {
         document.body.classList.remove('dark-mode');
-        // Cập nhật icon và text
-        const darkModeText = document.getElementById('darkModeText');
-        if (darkModeText) {
-            darkModeText.textContent = 'Chế độ tối';
-        }
-        // Thay đổi icon từ mặt trời sang mặt trăng
-        const darkModeIcon = document.querySelector('#toggleDarkModeButton i');
-        if (darkModeIcon) {
-            darkModeIcon.className = 'fas fa-moon me-1';
+        document.querySelectorAll('.card, .navbar, .btn-outline-secondary, .form-control, .form-select').forEach(el => {
+            el.classList.remove('dark-element');
+        });
+        
+        if (toggleDarkModeButton) {
+            toggleDarkModeButton.innerHTML = '<i class="fas fa-moon me-1"></i><span id="darkModeText">Chế độ tối</span>';
         }
     }
     
     async function handleMessageSubmit(e) {
         e.preventDefault();
         
-        const message = userInput.value.trim();
-        if (!message) return;
+        const messageText = messageInput.value.trim();
+        const imageFile = imageInput.files[0];
         
-        // Lấy giá trị từ các select
-        const subject = subjectSelect ? subjectSelect.value : "chung";
-        const mode = modeSelect ? modeSelect.value : "giải bài tập";
-        
-        // Tạo tin nhắn của người dùng
-        const userMessageElement = document.createElement("div");
-        userMessageElement.className = "message user-message";
-        
-        const userAvatarDiv = document.createElement("div");
-        userAvatarDiv.className = "message-avatar user-avatar";
-        
-        const userContentDiv = document.createElement("div");
-        userContentDiv.className = "message-content";
-        userContentDiv.innerHTML = formatMessage(message);
-        
-        userMessageElement.appendChild(userAvatarDiv);
-        userMessageElement.appendChild(userContentDiv);
-        chatArea.appendChild(userMessageElement);
-        
-        // Đánh dấu đang gửi
-        const typingIndicator = document.createElement("div");
-        typingIndicator.className = "message bot-message typing-indicator";
-        
-        const botAvatarDiv = document.createElement("div");
-        botAvatarDiv.className = "message-avatar bot-avatar";
-        
-        const dotsContainer = document.createElement("div");
-        dotsContainer.className = "typing-dots";
-        for (let i = 0; i < 3; i++) {
-            const dot = document.createElement("span");
-            dot.className = "dot";
-            dotsContainer.appendChild(dot);
+        // Validate input: Check if message is empty and no image is selected
+        if (!messageText && !imageFile) {
+            addErrorMessage("Vui lòng nhập câu hỏi hoặc chọn ảnh để gửi.");
+            return;
         }
         
-        typingIndicator.appendChild(botAvatarDiv);
-        typingIndicator.appendChild(dotsContainer);
-        chatArea.appendChild(typingIndicator);
+        // Reset form and hide image preview after submitting
+        if (messageText) {
+            // Create user message element
+            const userMessageElement = document.createElement("div");
+            userMessageElement.className = "message user-message";
+            
+            const userAvatarDiv = document.createElement("div");
+            userAvatarDiv.className = "message-avatar user-avatar";
+            
+            const userContentDiv = document.createElement("div");
+            userContentDiv.className = "message-content";
+            userContentDiv.innerHTML = formatMessage(messageText);
+            
+            userMessageElement.appendChild(userAvatarDiv);
+            userMessageElement.appendChild(userContentDiv);
+            chatArea.appendChild(userMessageElement);
+            
+            // Clear input
+            messageInput.value = "";
+            scrollToBottom();
+        }
         
-        // Clear input
-        userInput.value = "";
-        scrollToBottom();
+        // Check if image file is selected
+        if (imageFile) {
+            // Create image message
+            const userMessageElement = document.createElement("div");
+            userMessageElement.className = "message user-message";
+            
+            const userAvatarDiv = document.createElement("div");
+            userAvatarDiv.className = "message-avatar user-avatar";
+            
+            const userContentDiv = document.createElement("div");
+            userContentDiv.className = "message-content";
+            
+            // Add image in message
+            const imageElement = document.createElement("img");
+            imageElement.src = URL.createObjectURL(imageFile);
+            imageElement.className = "user-image-upload img-fluid mb-2 rounded";
+            imageElement.style.maxHeight = "200px";
+            
+            userContentDiv.appendChild(imageElement);
+            if (messageText) {
+                const textParagraph = document.createElement("p");
+                textParagraph.innerHTML = formatMessage(messageText);
+                userContentDiv.appendChild(textParagraph);
+            }
+            
+            userMessageElement.appendChild(userAvatarDiv);
+            userMessageElement.appendChild(userContentDiv);
+            chatArea.appendChild(userMessageElement);
+            
+            // Clear image input and hide preview
+            imageInput.value = "";
+            imagePreview.src = "";
+            imagePreviewContainer.classList.add("d-none");
+            document.getElementById("upload-container").classList.add("d-none");
+            
+            scrollToBottom();
+        }
+        
+        // Show loading overlay
+        loadingOverlay.classList.remove("d-none");
         
         try {
-            const response = await fetch("/send_message", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify({
-                    message: message,
-                    subject: subject,
-                    mode: mode,
-                    solution_mode: currentSolutionMode
-                }),
+            // Get selected options
+            const selectedSubject = subjectSelect ? subjectSelect.value : 'general';
+            const selectedMode = modeSelect ? modeSelect.value : 'assistant';
+            
+            // Form data for image upload
+            const formData = new FormData();
+            if (messageText) {
+                formData.append("message", messageText);
+            }
+            if (imageFile) {
+                formData.append("image", imageFile);
+            }
+            formData.append("subject", selectedSubject);
+            formData.append("mode", selectedMode);
+            formData.append("solution_mode", currentSolutionMode);
+            
+            // Determine which endpoint to use
+            const endpoint = imageFile ? '/upload_image' : '/send_message';
+            
+            // Send request
+            const response = await fetch(endpoint, {
+                method: 'POST',
+                body: formData
             });
             
             const data = await response.json();
             
-            // Xóa typing indicator
-            chatArea.removeChild(typingIndicator);
+            // Hide loading overlay
+            loadingOverlay.classList.add("d-none");
             
             if (response.ok) {
-                // Tạo tin nhắn phản hồi của bot
-                const botMessageElement = document.createElement("div");
-                botMessageElement.className = "message bot-message";
+                // Create AI message element
+                const aiMessageElement = document.createElement("div");
+                aiMessageElement.className = "message ai-message";
                 
-                const botAvatarDiv = document.createElement("div");
-                botAvatarDiv.className = "message-avatar bot-avatar";
+                const aiAvatarDiv = document.createElement("div");
+                aiAvatarDiv.className = "message-avatar ai-avatar";
                 
-                const botContentDiv = document.createElement("div");
-                botContentDiv.className = "message-content";
-                botContentDiv.innerHTML = formatMessage(data.response);
+                const aiContentDiv = document.createElement("div");
+                aiContentDiv.className = "message-content";
+                aiContentDiv.innerHTML = formatMessage(data.response);
                 
-                botMessageElement.appendChild(botAvatarDiv);
-                botMessageElement.appendChild(botContentDiv);
-                chatArea.appendChild(botMessageElement);
+                aiMessageElement.appendChild(aiAvatarDiv);
+                aiMessageElement.appendChild(aiContentDiv);
+                chatArea.appendChild(aiMessageElement);
                 
-                // Format math nếu có MathJax
-                if (typeof MathJax !== 'undefined') {
-                    MathJax.typesetPromise([botContentDiv]).catch(err => console.error('MathJax error:', err));
-                }
+                // Add special styling for code blocks for better readability
+                document.querySelectorAll('pre code').forEach(block => {
+                    block.classList.add('p-2', 'bg-light', 'rounded');
+                });
+                
+                scrollToBottom();
             } else {
-                addErrorMessage(data.error || "Có lỗi xảy ra khi xử lý tin nhắn của bạn.");
+                addErrorMessage(data.error || "Có lỗi xảy ra khi xử lý yêu cầu của bạn.");
             }
         } catch (error) {
-            // Xóa typing indicator nếu vẫn còn
-            if (typingIndicator.parentNode) {
-                chatArea.removeChild(typingIndicator);
-            }
-            
             console.error("Error:", error);
+            loadingOverlay.classList.add("d-none");
             addErrorMessage("Không thể kết nối đến máy chủ. Vui lòng thử lại sau.");
         }
-        
-        scrollToBottom();
     }
     
     function addErrorMessage(text) {
         const errorMessageElement = document.createElement("div");
-        errorMessageElement.className = "message error-message";
-        
-        const errorContentDiv = document.createElement("div");
-        errorContentDiv.className = "message-content";
-        errorContentDiv.textContent = text;
-        
-        errorMessageElement.appendChild(errorContentDiv);
+        errorMessageElement.className = "alert alert-danger mt-3";
+        errorMessageElement.textContent = text;
         chatArea.appendChild(errorMessageElement);
+        
+        // Auto remove after 5 seconds
+        setTimeout(() => {
+            errorMessageElement.remove();
+        }, 5000);
+        
+        scrollToBottom();
     }
     
     function formatMessage(text) {
         if (!text) return "";
         
-        let safeText = text;
-        
-        // Lưu trữ code blocks để tránh xung đột với các thay thế khác
+        // Save code blocks temporarily to avoid formatting them
         const codeBlocks = [];
-        
-        // 1. Protect code blocks
-        safeText = safeText.replace(/```([\s\S]*?)```/g, function(match) {
+        let safeText = text.replace(/```([\s\S]*?)```/g, function(match) {
             codeBlocks.push(match);
-            return `%%CODEBLOCK${codeBlocks.length - 1}%%`;
+            return "%%CODEBLOCK" + (codeBlocks.length-1) + "%%";
         });
         
-        // 2. Xử lý xuống dòng
+        // 1. Convert line breaks to <br>
         safeText = safeText.replace(/\n/g, '<br>');
+        
+        // 2. Convert LaTeX delimited by $ to rendered math
+        if (!safeText.includes('%%CODEBLOCK')) {
+            // Find all LaTeX expressions
+            const latexPattern = /\$(.*?)\$/g;
+            const latexMatches = safeText.match(latexPattern);
+            
+            if (latexMatches) {
+                for (let match of latexMatches) {
+                    // Extract LaTeX content
+                    const latex = match.slice(1, -1);
+                    
+                    try {
+                        // Create temporary element to hold rendered LaTeX
+                        const tempElement = document.createElement('span');
+                        katex.render(latex, tempElement, {
+                            throwOnError: false,
+                            displayMode: false
+                        });
+                        
+                        // Replace with rendered LaTeX
+                        safeText = safeText.replace(match, tempElement.outerHTML);
+                    } catch (e) {
+                        console.error("Error rendering LaTeX:", e);
+                        // Keep original if rendering fails
+                    }
+                }
+            }
+        }
         
         // 3. Format headings (# Heading -> <h3>Heading</h3>)
         if (!safeText.includes('%%CODEBLOCK')) {
@@ -425,6 +473,7 @@ $(document).ready(function() {
 
     function initializeChat() {
         console.log("Initializing chat...");
+        // Chỉ xóa khu vực chat và không thêm tin nhắn chào mừng nữa
         if (chatArea) {
             // Xóa tất cả tin nhắn hiện có để đảm bảo chat rỗng khi khởi động
             while (chatArea.firstChild) {
@@ -481,188 +530,150 @@ $(document).ready(function() {
     }
 
     async function processImage() {
-        if (!imageInput.files || !imageInput.files[0]) {
-            alert("Vui lòng chọn một hình ảnh");
+        const file = imageInput.files[0];
+        if (!file) {
+            addErrorMessage("Vui lòng chọn ảnh để xử lý.");
             return;
         }
         
-        progressContainer.classList.remove("d-none");
-        progressBar.style.width = "0%";
-        processImageButton.disabled = true;
-        
+        // Create form data
         const formData = new FormData();
-        formData.append("image", imageInput.files[0]);
-        formData.append("subject", subjectSelect ? subjectSelect.value : "chung");
-        formData.append("mode", modeSelect ? modeSelect.value : "giải bài tập");
-        formData.append("solution_mode", currentSolutionMode);
+        formData.append("image", file);
+        
+        // Show loading overlay
+        loadingOverlay.classList.remove("d-none");
         
         try {
-            // Simulation of progress
-            let progress = 0;
-            const interval = setInterval(() => {
-                progress += 5;
-                progressBar.style.width = `${Math.min(progress, 90)}%`;
-                if (progress >= 90) clearInterval(interval);
-            }, 200);
-            
-            const response = await fetch("/upload_image", {
-                method: "POST",
+            const response = await fetch('/upload_image', {
+                method: 'POST',
                 body: formData
             });
             
             const data = await response.json();
             
-            // Clear simulation and show 100%
-            clearInterval(interval);
-            progressBar.style.width = "100%";
+            // Hide loading overlay
+            loadingOverlay.classList.add("d-none");
             
-            setTimeout(() => {
-                progressContainer.classList.add("d-none");
-                processImageButton.disabled = false;
+            if (response.ok) {
+                // Create image message
+                const userMessageElement = document.createElement("div");
+                userMessageElement.className = "message user-message";
                 
-                if (response.ok) {
-                    // Hide upload container
-                    document.getElementById("upload-container").classList.add("d-none");
-                    
-                    // Reset file input and preview
-                    imageInput.value = "";
-                    imagePreviewContainer.classList.add("d-none");
-                    
-                    // Create image message
-                    const userMessageElement = document.createElement("div");
-                    userMessageElement.className = "message user-message";
-                    
-                    const userAvatarDiv = document.createElement("div");
-                    userAvatarDiv.className = "message-avatar user-avatar";
-                    
-                    const userContentDiv = document.createElement("div");
-                    userContentDiv.className = "message-content";
-                    
-                    // Add a small preview of the image
-                    const imagePreviewElement = document.createElement("div");
-                    imagePreviewElement.className = "user-image-preview";
-                    
-                    const imgElement = document.createElement("img");
-                    imgElement.src = data.original_image;
-                    imgElement.alt = "Ảnh đã tải lên";
-                    imgElement.classList.add("img-thumbnail");
-                    imgElement.style.maxHeight = "150px";
-                    
-                    imagePreviewElement.appendChild(imgElement);
-                    userContentDiv.appendChild(imagePreviewElement);
-                    userMessageElement.appendChild(userAvatarDiv);
-                    userMessageElement.appendChild(userContentDiv);
-                    chatArea.appendChild(userMessageElement);
-                    
-                    // Create bot response message
-                    const botMessageElement = document.createElement("div");
-                    botMessageElement.className = "message bot-message";
-                    
-                    const botAvatarDiv = document.createElement("div");
-                    botAvatarDiv.className = "message-avatar bot-avatar";
-                    
-                    const botContentDiv = document.createElement("div");
-                    botContentDiv.className = "message-content";
-                    botContentDiv.innerHTML = formatMessage(data.response);
-                    
-                    botMessageElement.appendChild(botAvatarDiv);
-                    botMessageElement.appendChild(botContentDiv);
-                    chatArea.appendChild(botMessageElement);
-                    
-                    scrollToBottom();
-                    
-                    // Format math if MathJax is available
-                    if (typeof MathJax !== 'undefined') {
-                        MathJax.typesetPromise([botContentDiv]).catch(err => console.error('MathJax error:', err));
-                    }
-                } else {
-                    alert(data.error || "Có lỗi xảy ra khi xử lý hình ảnh");
-                }
-            }, 500);
+                const userAvatarDiv = document.createElement("div");
+                userAvatarDiv.className = "message-avatar user-avatar";
+                
+                const userContentDiv = document.createElement("div");
+                userContentDiv.className = "message-content";
+                
+                // Add image in message
+                const imageElement = document.createElement("img");
+                imageElement.src = URL.createObjectURL(file);
+                imageElement.className = "user-image-upload img-fluid mb-2 rounded";
+                imageElement.style.maxHeight = "200px";
+                
+                userContentDiv.appendChild(imageElement);
+                
+                userMessageElement.appendChild(userAvatarDiv);
+                userMessageElement.appendChild(userContentDiv);
+                chatArea.appendChild(userMessageElement);
+                
+                // Create AI response message
+                const aiMessageElement = document.createElement("div");
+                aiMessageElement.className = "message ai-message";
+                
+                const aiAvatarDiv = document.createElement("div");
+                aiAvatarDiv.className = "message-avatar ai-avatar";
+                
+                const aiContentDiv = document.createElement("div");
+                aiContentDiv.className = "message-content";
+                aiContentDiv.innerHTML = formatMessage(data.response);
+                
+                aiMessageElement.appendChild(aiAvatarDiv);
+                aiMessageElement.appendChild(aiContentDiv);
+                chatArea.appendChild(aiMessageElement);
+                
+                // Clear form
+                imageInput.value = "";
+                imagePreview.src = "";
+                imagePreviewContainer.classList.add("d-none");
+                document.getElementById("upload-container").classList.add("d-none");
+                
+                scrollToBottom();
+            } else {
+                addErrorMessage(data.error || "Có lỗi xảy ra khi xử lý ảnh của bạn.");
+            }
         } catch (error) {
-            progressContainer.classList.add("d-none");
-            processImageButton.disabled = false;
             console.error("Error:", error);
-            alert("Không thể kết nối đến máy chủ. Vui lòng thử lại sau.");
+            loadingOverlay.classList.add("d-none");
+            addErrorMessage("Không thể kết nối đến máy chủ. Vui lòng thử lại sau.");
         }
     }
 
     function openCamera() {
-        const videoContainer = document.getElementById("video-container");
-        const videoElement = document.getElementById("camera-video");
-        
-        if (videoContainer.classList.contains("d-none")) {
-            navigator.mediaDevices.getUserMedia({ video: true })
-                .then(function(stream) {
-                    videoElement.srcObject = stream;
-                    videoContainer.classList.remove("d-none");
-                })
-                .catch(function(err) {
-                    console.error("Error accessing camera:", err);
-                    alert("Không thể truy cập camera. Vui lòng kiểm tra quyền truy cập và thử lại.");
-                });
-        } else {
-            // Stop camera stream
-            const stream = videoElement.srcObject;
-            if (stream) {
-                const tracks = stream.getTracks();
-                tracks.forEach(track => track.stop());
-                videoElement.srcObject = null;
-            }
-            videoContainer.classList.add("d-none");
+        // Check if camera is already open
+        if (stream) {
+            document.getElementById("cameraControls").classList.remove("d-none");
+            return;
         }
+        
+        // Check for camera support
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+            addErrorMessage("Trình duyệt của bạn không hỗ trợ truy cập camera.");
+            return;
+        }
+        
+        // Request camera access
+        navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } })
+            .then(function(s) {
+                stream = s;
+                cameraFeed.srcObject = stream;
+                document.getElementById("cameraControls").classList.remove("d-none");
+            })
+            .catch(function(error) {
+                console.error("Camera error:", error);
+                addErrorMessage("Không thể truy cập camera. Vui lòng kiểm tra quyền truy cập.");
+            });
     }
 
     function takePhoto() {
-        const videoElement = document.getElementById("camera-video");
-        const videoContainer = document.getElementById("video-container");
+        if (!stream) return;
         
-        // Create a canvas element to capture the image
-        const canvas = document.createElement("canvas");
-        canvas.width = videoElement.videoWidth;
-        canvas.height = videoElement.videoHeight;
-        const ctx = canvas.getContext("2d");
-        ctx.drawImage(videoElement, 0, 0, canvas.width, canvas.height);
+        const context = cameraCanvas.getContext('2d');
         
-        // Convert to file
-        canvas.toBlob(function(blob) {
-            const file = new File([blob], "camera-capture.jpg", { type: "image/jpeg" });
+        // Set canvas dimensions to match video
+        cameraCanvas.width = cameraFeed.videoWidth;
+        cameraCanvas.height = cameraFeed.videoHeight;
+        
+        // Draw video frame on canvas
+        context.drawImage(cameraFeed, 0, 0, cameraCanvas.width, cameraCanvas.height);
+        
+        // Convert canvas to Blob
+        cameraCanvas.toBlob(function(blob) {
+            // Create a File object
+            const file = new File([blob], "camera_photo.jpg", { type: "image/jpeg" });
             
-            // Create a DataTransfer object to simulate a file input
+            // Convert to DataURL for preview
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                imagePreview.src = e.target.result;
+                imagePreviewContainer.classList.remove("d-none");
+            }
+            reader.readAsDataURL(file);
+            
+            // Create a new File list to replace the existing file input
             const dataTransfer = new DataTransfer();
             dataTransfer.items.add(file);
             imageInput.files = dataTransfer.files;
             
-            // Update preview
-            imagePreview.src = canvas.toDataURL("image/jpeg");
-            imagePreviewContainer.classList.remove("d-none");
-            
-            // Stop camera stream
-            const stream = videoElement.srcObject;
+            // Hide camera controls and stop stream
+            document.getElementById("cameraControls").classList.add("d-none");
             if (stream) {
-                const tracks = stream.getTracks();
-                tracks.forEach(track => track.stop());
-                videoElement.srcObject = null;
+                stream.getTracks().forEach(track => track.stop());
+                stream = null;
             }
-            videoContainer.classList.add("d-none");
-        }, "image/jpeg");
+            
+            // Show upload container
+            document.getElementById("upload-container").classList.remove("d-none");
+        }, 'image/jpeg', 0.95);
     }
-    
-    // Initialize event listeners for the custom buttons
-    document.getElementById('toggleDarkModeButton')?.addEventListener('click', toggleDarkMode);
-    document.getElementById('image-upload-button')?.addEventListener('click', toggleImageUpload);
-    
-    // Reference to the clear-chat-button element in HTML
-    // Đã loại bỏ liên kết này để nút "Xóa lịch sử" không hoạt động
-    // document.getElementById('clear-chat-button')?.addEventListener('click', clearChatHistory);
-    
-    // Check if Bootstrap Modal is available
-    if (typeof bootstrap !== 'undefined' && bootstrap.Modal) {
-        console.log("Bootstrap Modal is available");
-    } else {
-        console.warn("Bootstrap Modal not available");
-    }
-
-    // Let others know DOM is ready
-    console.log("DOM fully loaded, initializing application...");
 });
