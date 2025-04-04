@@ -37,18 +37,36 @@ def get_ai_response(prompt: str, context: Optional[str] = None, image_url: Optio
         # Get API key from Flask app config or environment
         from flask import current_app
         
-        # Try to get API key from app config first (preferred)
+        # Get API key with additional debug info
         api_key = None
+        app_key = None
+        env_key = None
+        
+        # Try to get from Flask app config
         try:
-            api_key = current_app.config.get('GOOGLE_AI_API_KEY')
-        except:
+            app_key = current_app.config.get('GOOGLE_AI_API_KEY')
+            if app_key:
+                logger.debug(f"API key found in app config (length: {len(app_key)})")
+                # Lấy vài ký tự đầu và cuối để debug
+                masked_app_key = f"{app_key[:4]}...{app_key[-4:]}" if len(app_key) > 8 else "***"
+                logger.debug(f"App config API key (masked): {masked_app_key}")
+                api_key = app_key
+        except Exception as e:
+            logger.debug(f"Error getting API key from app config: {e}")
             # If Flask app context is not available, try from environment
             pass
         
-        # Fall back to environment variable
-        if not api_key:
-            api_key = os.environ.get("GOOGLE_AI_API_KEY")
-            
+        # Check environment variable too
+        env_key = os.environ.get("GOOGLE_AI_API_KEY")
+        if env_key:
+            logger.debug(f"API key found in environment (length: {len(env_key)})")
+            # Lấy vài ký tự đầu và cuối để debug
+            masked_env_key = f"{env_key[:4]}...{env_key[-4:]}" if len(env_key) > 8 else "***"
+            logger.debug(f"Environment API key (masked): {masked_env_key}")
+            if not api_key:  # Chỉ dùng env_key nếu chưa có api_key từ app config
+                api_key = env_key
+        
+        # Final check
         if not api_key:
             logger.error("API key not found in app config or environment")
             return "Không thể kết nối với Google AI API. Vui lòng kiểm tra kết nối mạng hoặc thử lại sau. Nếu lỗi vẫn tiếp tục, hãy nhập lại API key trong trang cài đặt bằng cách truy cập /api_key"
@@ -240,8 +258,8 @@ def call_gemini_api(prompt: str, api_key: str, image_url: Optional[str] = None) 
     masked_key = f"{api_key[:4]}...{api_key[-4:]}" if key_len > 8 else "***"
     logger.debug(f"Using API key: {masked_key} (length: {key_len})")
     
-    # URL theo phiên bản v1 với model gemini-1.5-pro
-    url = "https://generativelanguage.googleapis.com/v1/models/gemini-1.5-pro:generateContent"
+    # URL theo phiên bản v1 với model gemini-1.5-flash (nhanh hơn)
+    url = "https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent"
     headers = {
         "Content-Type": "application/json"
     }
@@ -356,6 +374,7 @@ def call_gemini_api(prompt: str, api_key: str, image_url: Optional[str] = None) 
             ]
         })
     
+    # Định dạng payload theo đúng API v1 của Gemini
     payload = {
         "contents": contents,
         "generation_config": {
@@ -363,8 +382,23 @@ def call_gemini_api(prompt: str, api_key: str, image_url: Optional[str] = None) 
             "top_k": 40,
             "top_p": 0.95,
             "max_output_tokens": 800,
-            "response_mime_type": "text/plain"
-        }
+            # Kích thước đầu ra tối đa
+            "candidate_count": 1
+        },
+        "safety_settings": [
+            {
+                "category": "HARM_CATEGORY_HATE_SPEECH",
+                "threshold": "BLOCK_MEDIUM_AND_ABOVE"
+            },
+            {
+                "category": "HARM_CATEGORY_SEXUALLY_EXPLICIT",
+                "threshold": "BLOCK_MEDIUM_AND_ABOVE"
+            },
+            {
+                "category": "HARM_CATEGORY_DANGEROUS_CONTENT",
+                "threshold": "BLOCK_MEDIUM_AND_ABOVE"
+            }
+        ]
     }
     
     try:
