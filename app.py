@@ -16,18 +16,24 @@ from utils.huggingface_api import get_ai_response, get_specialized_ai_response
 
 # Set environment variables directly in code
 
-# Set up logging
-logging.basicConfig(level=logging.DEBUG)
+# Set up logging - giảm mức log để tăng hiệu suất
+logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# Create Flask app
-app = Flask(__name__)
+# Create Flask app 
+app = Flask(__name__, static_folder='static', static_url_path='/static')
 # Đặt secret key trực tiếp để đảm bảo hoạt động
+logger.debug("Setting app secret key")
 app.secret_key = "your_secure_secret_key_for_sessions_123456789"
+logger.debug("Setting app config")
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max upload size
+logger.debug("Setting app config")
 app.config['UPLOAD_FOLDER'] = os.path.join('static', 'uploads')
-# Đặt API key trực tiếp để đảm bảo hoạt động
-app.config['GOOGLE_AI_API_KEY'] = "AIzaSyBN0yBx3BRSJeuHxglNqbG4qfBor9grnKk"
+# Đặt API key từ biến môi trường hoặc dùng key mặc định
+logger.debug("Setting app config")
+app.config['GOOGLE_AI_API_KEY'] = os.environ.get('GOOGLE_AI_API_KEY', "AIzaSyBN0yBx3BRSJeuHxglNqbG4qfBor9grnKk")
+logger.debug("Setting app config")
+app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 31536000  # 1 năm cache cho static files
 
 # Create upload folder if it doesn't exist
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)

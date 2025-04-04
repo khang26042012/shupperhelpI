@@ -1,4 +1,4 @@
-document.addEventListener('DOMContentLoaded', function() {
+window.addEventListener('DOMContentLoaded', function() {
     console.log('DOM fully loaded, initializing application...');
     
     // DOM Elements
@@ -77,7 +77,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // Initialize chat
-    initializeChat();
+    setTimeout(initializeChat, 500);
 
     // Initialize MathQuill
     initializeMathQuill();
@@ -325,6 +325,12 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function addMessage(text, sender) {
+        // Kiểm tra xem chatArea có tồn tại không
+        if (!chatArea) {
+            console.error('Chat area element not found');
+            return;
+        }
+
         const messageDiv = document.createElement('div');
         messageDiv.className = `chat-message ${sender}-message`;
 
@@ -380,7 +386,11 @@ document.addEventListener('DOMContentLoaded', function() {
             </div>
         `;
 
-        chatArea.appendChild(messageDiv);
+        try {
+            chatArea.appendChild(messageDiv);
+        } catch (error) {
+            console.error('Error appending message:', error);
+        }
 
         if (sender === 'bot') {
             const toggleBtn = messageDiv.querySelector('.toggle-explanation');

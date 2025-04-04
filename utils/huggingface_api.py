@@ -4,8 +4,8 @@ import requests
 import base64
 from typing import Optional, Dict, Any
 
-# Set up logging
-logging.basicConfig(level=logging.DEBUG)
+# Set up logging - giảm mức log để tăng hiệu suất
+logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 # Lời chào mở đầu
@@ -352,7 +352,8 @@ def call_gemini_api(prompt: str, api_key: str, image_url: Optional[str] = None) 
             "temperature": 0.7,
             "top_k": 40,
             "top_p": 0.95,
-            "max_output_tokens": 800
+            "max_output_tokens": 800,
+            "response_mime_type": "text/plain"
         }
     }
     
