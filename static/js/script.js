@@ -222,6 +222,7 @@ $(document).ready(function() {
             chatArea.removeChild(loadingMessage);
             
             if (response.ok) {
+                console.log("Đã xóa toàn bộ lịch sử chat");
                 const data = await response.json();
                 addMessage(data.response, "bot");
             } else {
@@ -381,6 +382,7 @@ $(document).ready(function() {
     }
 
     async function clearChatHistory() {
+        // Xóa tất cả tin nhắn trong chat area (không cần giữ lại bất kỳ tin nhắn nào)
         try {
             const response = await fetch('/clear_history', {
                 method: 'POST',
@@ -392,9 +394,12 @@ $(document).ready(function() {
             const data = await response.json();
 
             if (response.ok) {
-                while (chatArea.children.length > 1) {
-                    chatArea.removeChild(chatArea.lastChild);
+                console.log("Đã xóa toàn bộ lịch sử chat");
+                // Xóa tất cả tin nhắn trong chat area (không cần giữ lại bất kỳ tin nhắn nào)
+                while (chatArea.firstChild) {
+                    chatArea.removeChild(chatArea.firstChild);
                 }
+                console.log("Đã xóa toàn bộ lịch sử chat");
             } else {
                 console.error('Error:', data.error);
             }
@@ -464,6 +469,7 @@ $(document).ready(function() {
             
             // Process response
             if (response.ok) {
+                console.log("Đã xóa toàn bộ lịch sử chat");
                 const data = await response.json();
                 console.log("Ảnh đã được xử lý thành công");
                 
@@ -577,7 +583,7 @@ $(document).ready(function() {
         // Setup click handlers for all buttons
         document.getElementById('math-button')?.addEventListener('click', toggleMathInput);
         document.getElementById('insert-math-button')?.addEventListener('click', insertMathExpression);
-        document.getElementById('clear-chat-button')?.addEventListener('click', clearChatHistory);
+        document.getElementById('clearHistoryButton')?.addEventListener('click', clearChatHistory);
         document.getElementById('camera-button')?.addEventListener('click', openCamera);
     });
 
