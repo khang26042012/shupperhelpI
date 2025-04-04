@@ -28,76 +28,129 @@ $(document).ready(function() {
     const solutionModeContainer = document.getElementById("solution-mode-container");
 
     // Dark Mode
-    const isDarkMode = localStorage.getItem("darkMode") === "enabled";
-    if (isDarkMode) {
-        enableDarkMode();
-    }
-
+    let isDarkMode = localStorage.getItem('darkMode') === 'enabled';
+    
+    // Solution Mode
+    let currentSolutionMode = "full"; // Default: full solution
+    
     // Initialization
-    let activeSolutionMode = "full"; // Default solution mode
-    let mathField;
-
-    // MathQuill initialization
-    if (typeof MathQuill !== 'undefined') {
-        initializeMathQuill();
-    } else {
-        console.warn("MathQuill not loaded");
+    (function initialize() {
+        // Update initial state
+        updateSolutionModeButtons(currentSolutionMode);
+        
+        // Initialize MathQuill if needed
+        if (mathInput) {
+            initializeMathQuill();
+        }
+        
+        // Check dark mode
+        if (isDarkMode) {
+            enableDarkMode();
+        } else {
+            disableDarkMode();
+        }
+        
+        // Initialize chat area
+        initializeChat();
+        
+        // Hide loading indicator when window is fully loaded
+        window.addEventListener('load', function() {
+            console.log("Window fully loaded, hiding page loading indicator");
+            const pageLoading = document.getElementById('page-loading');
+            if (pageLoading) {
+                pageLoading.style.display = 'none';
+            }
+        });
+    })();
+    
+    // Event Listeners
+    if (messageForm) {
+        messageForm.addEventListener("submit", handleMessageSubmit);
     }
-
-    // Event Listeners 
-    if (messageForm) messageForm.addEventListener("submit", handleMessageSubmit);
-    if (uploadForm) uploadForm.addEventListener("submit", function(e) { e.preventDefault(); });
-    if (darkModeToggle) darkModeToggle.addEventListener("click", toggleDarkMode);
-    if (imageInput) imageInput.addEventListener("change", handleImagePreview);
-    if (clearPreviewButton) clearPreviewButton.addEventListener("click", function() {
-        imagePreviewContainer.classList.add("d-none");
-        imagePreview.src = "";
-        imageInput.value = "";
-    });
-    if (imageUploadButton) imageUploadButton.addEventListener("click", toggleImageUpload);
-    if (processImageButton) processImageButton.addEventListener("click", processImage);
+    
+    if (solutionModeButtons.length > 0) {
+        solutionModeButtons.forEach(button => {
+            button.addEventListener("click", function() {
+                const mode = this.getAttribute("data-mode");
+                currentSolutionMode = mode;
+                updateSolutionModeButtons(mode);
+            });
+        });
+    }
+    
     if (modeSelect) {
         modeSelect.addEventListener("change", function() {
-            const mode = modeSelect.value;
+            const mode = this.value;
+            // Hiển thị hoặc ẩn solution mode tùy thuộc vào chế độ
             if (mode === "giải bài tập") {
-                solutionModeContainer.classList.remove("d-none");
+                solutionModeContainer.style.display = "block";
+                solutionModeLabel.style.display = "block";
             } else {
-                solutionModeContainer.classList.add("d-none");
+                solutionModeContainer.style.display = "none";
+                solutionModeLabel.style.display = "none";
             }
         });
+        
+        // Kích hoạt ngay để cập nhật UI
+        modeSelect.dispatchEvent(new Event('change'));
     }
-
-    // Solution mode buttons
-    solutionModeButtons.forEach(button => {
-        button.addEventListener("click", function() {
-            const mode = this.getAttribute("data-mode");
-            updateSolutionModeButtons(mode);
+    
+    if (document.getElementById("toggle-math-button")) {
+        document.getElementById("toggle-math-button").addEventListener("click", toggleMathInput);
+    }
+    
+    if (document.getElementById("insert-math-button")) {
+        document.getElementById("insert-math-button").addEventListener("click", insertMathExpression);
+    }
+    
+    if (document.getElementById("toggleDarkModeButton")) {
+        document.getElementById("toggleDarkModeButton").addEventListener("click", toggleDarkMode);
+    }
+    
+    if (imageUploadButton) {
+        imageUploadButton.addEventListener("click", toggleImageUpload);
+    }
+    
+    if (imageInput) {
+        imageInput.addEventListener("change", handleImagePreview);
+    }
+    
+    if (clearPreviewButton) {
+        clearPreviewButton.addEventListener("click", function() {
+            imagePreview.src = "";
+            imagePreviewContainer.classList.add("d-none");
+            imageInput.value = "";
         });
-    });
-
-    // Modify HTML for accessibility
-    if (subjectLabel) subjectLabel.setAttribute("for", "subject-select");
-    if (modeLabel) modeLabel.setAttribute("for", "mode-select");
-    if (solutionModeLabel) solutionModeLabel.setAttribute("for", "solution-mode-container");
-
+    }
+    
+    if (processImageButton) {
+        processImageButton.addEventListener("click", processImage);
+    }
+    
+    if (document.getElementById("open-camera-button")) {
+        document.getElementById("open-camera-button").addEventListener("click", openCamera);
+    }
+    
+    if (document.getElementById("capture-photo")) {
+        document.getElementById("capture-photo").addEventListener("click", takePhoto);
+    }
+    
     // Functions
     function updateSolutionModeButtons(mode) {
-        activeSolutionMode = mode;
-        solutionModeButtons.forEach(btn => {
-            btn.classList.remove("active");
-            if (btn.getAttribute("data-mode") === mode) {
-                btn.classList.add("active");
+        solutionModeButtons.forEach(button => {
+            const buttonMode = button.getAttribute("data-mode");
+            if (buttonMode === mode) {
+                button.classList.add("active");
+            } else {
+                button.classList.remove("active");
             }
         });
     }
-
+    
     function initializeMathQuill() {
-        const MQ = MathQuill.getInterface(2);
-        
-        // Create MathQuill field
-        const mathInputField = document.getElementById('math-input-field');
-        if (mathInputField) {
-            mathField = MQ.MathField(mathInputField, {
+        try {
+            var MQ = MathQuill.getInterface(2);
+            var mathField = MQ.MathField(mathInput, {
                 spaceBehavesLikeTab: true,
                 handlers: {
                     edit: function() {
@@ -106,247 +159,248 @@ $(document).ready(function() {
                     }
                 }
             });
+            
+            // Ensure we update the preview immediately
+            updateMathPreview(mathField.latex());
+        } catch (e) {
+            console.error("MathQuill initialization error:", e);
         }
     }
-
+    
     function updateMathPreview(latex) {
-        if (mathPreview) {
-            try {
-                katex.render(latex, mathPreview, {
-                    throwOnError: false,
-                    displayMode: true
-                });
-            } catch (e) {
-                mathPreview.textContent = e;
+        try {
+            if (mathPreview) {
+                // Cập nhật thẻ span với mã LaTeX để MathJax hiển thị
+                mathPreview.textContent = '\\(' + latex + '\\)';
+                
+                // Nếu MathJax đã tải, kích hoạt render
+                if (typeof MathJax !== 'undefined') {
+                    MathJax.typesetPromise([mathPreview]).catch(err => console.error("MathJax error:", err));
+                }
             }
+        } catch (e) {
+            console.error("Error updating math preview:", e);
         }
     }
-
+    
     function toggleMathInput() {
-        if (mathInput) {
-            mathInput.classList.toggle("d-none");
-            if (!mathInput.classList.contains("d-none")) {
-                mathField.focus();
-            }
+        const mathInputContainer = document.getElementById("math-input-container");
+        if (mathInputContainer.classList.contains("d-none")) {
+            mathInputContainer.classList.remove("d-none");
+        } else {
+            mathInputContainer.classList.add("d-none");
         }
     }
-
+    
     function insertMathExpression() {
-        if (mathField && userInput) {
-            const latex = mathField.latex();
-            const currentText = userInput.value;
-            const cursorPosition = userInput.selectionStart;
-            
-            // Insert LaTeX code at cursor position
-            const mathMarkup = '$' + latex + '$';
-            const newText = currentText.substring(0, cursorPosition) + mathMarkup + currentText.substring(cursorPosition);
-            userInput.value = newText;
-            
-            // Hide math input
-            mathInput.classList.add("d-none");
-            
-            // Set focus back to main input
-            userInput.focus();
-            
-            // Move cursor after the inserted expression
-            const newCursorPosition = cursorPosition + mathMarkup.length;
-            userInput.setSelectionRange(newCursorPosition, newCursorPosition);
+        try {
+            const latex = document.getElementById("math-input").getAttribute("data-latex") || "";
+            if (latex && userInput) {
+                const cursorPos = userInput.selectionStart;
+                const textBefore = userInput.value.substring(0, cursorPos);
+                const textAfter = userInput.value.substring(cursorPos);
+                
+                // Format for LaTeX: use $$ delimiters
+                userInput.value = textBefore + " $$" + latex + "$$ " + textAfter;
+                
+                // Reset math input and close container
+                document.getElementById("math-input-container").classList.add("d-none");
+                
+                // Set focus back to the message input
+                userInput.focus();
+                userInput.selectionStart = userInput.selectionEnd = cursorPos + latex.length + 5; // +5 for the $$ delimiters and spaces
+            }
+        } catch (e) {
+            console.error("Error inserting math expression:", e);
         }
     }
-
+    
     function toggleDarkMode() {
-        if (document.body.classList.contains("dark-mode")) {
+        if (isDarkMode) {
             disableDarkMode();
+            isDarkMode = false;
+            localStorage.setItem('darkMode', 'disabled');
         } else {
             enableDarkMode();
+            isDarkMode = true;
+            localStorage.setItem('darkMode', 'enabled');
         }
     }
-
+    
     function enableDarkMode() {
-        document.body.classList.add("dark-mode");
-        localStorage.setItem("darkMode", "enabled");
-        if (darkModeToggle) {
-            darkModeToggle.innerHTML = '<i class="fas fa-sun"></i>';
-            darkModeToggle.setAttribute("title", "Chuyển sang chế độ sáng");
+        document.body.classList.add('dark-mode');
+        // Cập nhật icon và text
+        const darkModeText = document.getElementById('darkModeText');
+        if (darkModeText) {
+            darkModeText.textContent = 'Chế độ sáng';
+        }
+        // Thay đổi icon từ mặt trăng sang mặt trời
+        const darkModeIcon = document.querySelector('#toggleDarkModeButton i');
+        if (darkModeIcon) {
+            darkModeIcon.className = 'fas fa-sun me-1';
         }
     }
-
+    
     function disableDarkMode() {
-        document.body.classList.remove("dark-mode");
-        localStorage.setItem("darkMode", "disabled");
-        if (darkModeToggle) {
-            darkModeToggle.innerHTML = '<i class="fas fa-moon"></i>';
-            darkModeToggle.setAttribute("title", "Chuyển sang chế độ tối");
+        document.body.classList.remove('dark-mode');
+        // Cập nhật icon và text
+        const darkModeText = document.getElementById('darkModeText');
+        if (darkModeText) {
+            darkModeText.textContent = 'Chế độ tối';
+        }
+        // Thay đổi icon từ mặt trời sang mặt trăng
+        const darkModeIcon = document.querySelector('#toggleDarkModeButton i');
+        if (darkModeIcon) {
+            darkModeIcon.className = 'fas fa-moon me-1';
         }
     }
-
+    
     async function handleMessageSubmit(e) {
         e.preventDefault();
         
         const message = userInput.value.trim();
         if (!message) return;
-
-        // Add user message to chat
-        addMessage(message, "user");
         
-        // Clear input field
-        userInput.value = "";
-        
-        // Get selected mode and subject
-        const mode = modeSelect ? modeSelect.value : "giải bài tập";
+        // Lấy giá trị từ các select
         const subject = subjectSelect ? subjectSelect.value : "chung";
+        const mode = modeSelect ? modeSelect.value : "giải bài tập";
+        
+        // Tạo tin nhắn của người dùng
+        const userMessageElement = document.createElement("div");
+        userMessageElement.className = "message user-message";
+        
+        const userAvatarDiv = document.createElement("div");
+        userAvatarDiv.className = "message-avatar user-avatar";
+        
+        const userContentDiv = document.createElement("div");
+        userContentDiv.className = "message-content";
+        userContentDiv.innerHTML = formatMessage(message);
+        
+        userMessageElement.appendChild(userAvatarDiv);
+        userMessageElement.appendChild(userContentDiv);
+        chatArea.appendChild(userMessageElement);
+        
+        // Đánh dấu đang gửi
+        const typingIndicator = document.createElement("div");
+        typingIndicator.className = "message bot-message typing-indicator";
+        
+        const botAvatarDiv = document.createElement("div");
+        botAvatarDiv.className = "message-avatar bot-avatar";
+        
+        const dotsContainer = document.createElement("div");
+        dotsContainer.className = "typing-dots";
+        for (let i = 0; i < 3; i++) {
+            const dot = document.createElement("span");
+            dot.className = "dot";
+            dotsContainer.appendChild(dot);
+        }
+        
+        typingIndicator.appendChild(botAvatarDiv);
+        typingIndicator.appendChild(dotsContainer);
+        chatArea.appendChild(typingIndicator);
+        
+        // Clear input
+        userInput.value = "";
+        scrollToBottom();
         
         try {
-            // Add a placeholder for the AI response
-            const loadingMessage = document.createElement("div");
-            loadingMessage.className = "message bot-message";
-            loadingMessage.innerHTML = '<div class="message-content"><div class="typing-indicator"><span></span><span></span><span></span></div></div>';
-            chatArea.appendChild(loadingMessage);
-            scrollToBottom();
-            
-            // Send message to backend
             const response = await fetch("/send_message", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
                 },
-                body: JSON.stringify({ 
+                body: JSON.stringify({
                     message: message,
                     subject: subject,
                     mode: mode,
-                    solution_mode: activeSolutionMode
+                    solution_mode: currentSolutionMode
                 }),
             });
             
-            // Remove loading indicator
-            chatArea.removeChild(loadingMessage);
+            const data = await response.json();
             
-                const data = await response.json();
-                addMessage(data.response, "bot");
+            // Xóa typing indicator
+            chatArea.removeChild(typingIndicator);
+            
+            if (response.ok) {
+                // Tạo tin nhắn phản hồi của bot
+                const botMessageElement = document.createElement("div");
+                botMessageElement.className = "message bot-message";
+                
+                const botAvatarDiv = document.createElement("div");
+                botAvatarDiv.className = "message-avatar bot-avatar";
+                
+                const botContentDiv = document.createElement("div");
+                botContentDiv.className = "message-content";
+                botContentDiv.innerHTML = formatMessage(data.response);
+                
+                botMessageElement.appendChild(botAvatarDiv);
+                botMessageElement.appendChild(botContentDiv);
+                chatArea.appendChild(botMessageElement);
+                
+                // Format math nếu có MathJax
+                if (typeof MathJax !== 'undefined') {
+                    MathJax.typesetPromise([botContentDiv]).catch(err => console.error('MathJax error:', err));
+                }
             } else {
-                const errorData = await response.json();
-                addErrorMessage(errorData.error || "Đã xảy ra lỗi khi gửi tin nhắn.");
+                addErrorMessage(data.error || "Có lỗi xảy ra khi xử lý tin nhắn của bạn.");
             }
         } catch (error) {
+            // Xóa typing indicator nếu vẫn còn
+            if (typingIndicator.parentNode) {
+                chatArea.removeChild(typingIndicator);
+            }
+            
             console.error("Error:", error);
             addErrorMessage("Không thể kết nối đến máy chủ. Vui lòng thử lại sau.");
         }
         
         scrollToBottom();
     }
-
-    function addMessage(text, sender) {
-        const messageDiv = document.createElement("div");
-        messageDiv.className = `message ${sender}-message`;
-        
-        const avatar = document.createElement("div");
-        avatar.className = "avatar";
-        
-        if (sender === "bot") {
-            avatar.innerHTML = '<img src="/static/img/bot-avatar.png" alt="AI" class="avatar-img">';
-        } else {
-            avatar.innerHTML = '<div class="user-avatar-placeholder"><i class="fas fa-user"></i></div>';
-        }
-        
-        const contentDiv = document.createElement("div");
-        contentDiv.className = "message-content";
-        contentDiv.innerHTML = formatMessage(text);
-        
-        messageDiv.appendChild(avatar);
-        messageDiv.appendChild(contentDiv);
-        chatArea.appendChild(messageDiv);
-    }
-
+    
     function addErrorMessage(text) {
-        const messageDiv = document.createElement("div");
-        messageDiv.className = "message error-message";
+        const errorMessageElement = document.createElement("div");
+        errorMessageElement.className = "message error-message";
         
-        const avatar = document.createElement("div");
-        avatar.className = "avatar";
-        avatar.innerHTML = '<div class="error-avatar-placeholder"><i class="fas fa-exclamation-triangle"></i></div>';
+        const errorContentDiv = document.createElement("div");
+        errorContentDiv.className = "message-content";
+        errorContentDiv.textContent = text;
         
-        const contentDiv = document.createElement("div");
-        contentDiv.className = "message-content";
-        contentDiv.textContent = text;
-        
-        messageDiv.appendChild(avatar);
-        messageDiv.appendChild(contentDiv);
-        chatArea.appendChild(messageDiv);
+        errorMessageElement.appendChild(errorContentDiv);
+        chatArea.appendChild(errorMessageElement);
     }
-
+    
     function formatMessage(text) {
         if (!text) return "";
         
-        // Escape HTML to prevent XSS
-        let safeText = text
-            .replace(/&/g, "&amp;")
-            .replace(/</g, "&lt;")
-            .replace(/>/g, "&gt;")
-            .replace(/"/g, "&quot;")
-            .replace(/'/g, "&#039;");
+        let safeText = text;
         
-        // Format markdown and LaTeX
-        // 1. Convert markdown headings
-        safeText = safeText.replace(/^###\s+(.+)$/gm, '<h5>$1</h5>');
-        safeText = safeText.replace(/^##\s+(.+)$/gm, '<h4>$1</h4>');
-        safeText = safeText.replace(/^#\s+(.+)$/gm, '<h3>$1</h3>');
+        // Lưu trữ code blocks để tránh xung đột với các thay thế khác
+        const codeBlocks = [];
         
-        // 2. Convert bold and italic
-        safeText = safeText.replace(/\*\*\*(.+?)\*\*\*/g, '<strong><em>$1</em></strong>');
-        safeText = safeText.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
-        safeText = safeText.replace(/\*(.+?)\*/g, '<em>$1</em>');
+        // 1. Protect code blocks
+        safeText = safeText.replace(/```([\s\S]*?)```/g, function(match) {
+            codeBlocks.push(match);
+            return `%%CODEBLOCK${codeBlocks.length - 1}%%`;
+        });
         
-        // 3. Convert lists
-        safeText = safeText.replace(/^\s*[\-\*]\s+(.+)$/gm, '<li>$1</li>').replace(/(<li>.*<\/li>)/gs, '<ul>$1</ul>');
-        safeText = safeText.replace(/^\s*(\d+)\.\s+(.+)$/gm, '<li>$2</li>').replace(/(<li>.*<\/li>)/gs, '<ol>$1</ol>');
+        // 2. Xử lý xuống dòng
+        safeText = safeText.replace(/\n/g, '<br>');
         
-        // 4. Convert line breaks
-        safeText = safeText.replace(/\n\n/g, '<br><br>').replace(/\n/g, '<br>');
-        
-        // 5. Render LaTeX if available (both inline and display)
-        if (typeof katex !== 'undefined') {
-            // First, protect code blocks
-            const codeBlocks = [];
-            safeText = safeText.replace(/```([\s\S]*?)```/g, function(match) {
-                codeBlocks.push(match);
-                return `%%CODEBLOCK${codeBlocks.length - 1}%%`;
-            });
+        // 3. Format headings (# Heading -> <h3>Heading</h3>)
+        if (!safeText.includes('%%CODEBLOCK')) {
+            safeText = safeText.replace(/^# (.*?)$/gm, '<h3>$1</h3>');
+            safeText = safeText.replace(/^## (.*?)$/gm, '<h4>$1</h4>');
+            safeText = safeText.replace(/^### (.*?)$/gm, '<h5>$1</h5>');
             
-            // Then handle LaTeX
-            let processedText = '';
-            let currentIndex = 0;
+            // 4. Format lists
+            safeText = safeText.replace(/^\* (.*?)$/gm, '<li>$1</li>');
+            safeText = safeText.replace(/^- (.*?)$/gm, '<li>$1</li>');
+            safeText = safeText.replace(/^(\d+)\. (.*?)$/gm, '<li>$1. $2</li>');
             
-            // Regular expression to match both inline $...$ and display $$...$$ LaTeX
-            const latexRegex = /(\$\$[\s\S]*?\$\$|\$[^\$\n]+?\$)/g;
-            let match;
-            
-            while ((match = latexRegex.exec(safeText)) !== null) {
-                // Add text before the LaTeX
-                processedText += safeText.substring(currentIndex, match.index);
-                
-                try {
-                    const isDisplayMode = match[0].startsWith('$$');
-                    const latexContent = isDisplayMode 
-                        ? match[0].substring(2, match[0].length - 2) 
-                        : match[0].substring(1, match[0].length - 1);
-                    
-                    const renderedLatex = katex.renderToString(latexContent, {
-                        throwOnError: false,
-                        displayMode: isDisplayMode
-                    });
-                    
-                    processedText += renderedLatex;
-                } catch (e) {
-                    // If there's an error in the LaTeX, just use the original text
-                    processedText += match[0];
-                }
-                
-                currentIndex = match.index + match[0].length;
-            }
-            
-            // Add any remaining text
-            processedText += safeText.substring(currentIndex);
-            safeText = processedText;
+            // 5. Basic markdown
+            safeText = safeText.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+            safeText = safeText.replace(/\*(.*?)\*/g, '<em>$1</em>');
             
             // Restore code blocks
             safeText = safeText.replace(/%%CODEBLOCK(\d+)%%/g, function(match, index) {
@@ -372,7 +426,10 @@ $(document).ready(function() {
     function initializeChat() {
         console.log("Initializing chat...");
         if (chatArea) {
-            // Không thêm tin nhắn chào mừng, trạng thái chat trống ban đầu
+            // Xóa tất cả tin nhắn hiện có để đảm bảo chat rỗng khi khởi động
+            while (chatArea.firstChild) {
+                chatArea.removeChild(chatArea.firstChild);
+            }
             scrollToBottom();
         } else {
             console.warn("Chat area not found during initialization");
@@ -389,7 +446,7 @@ $(document).ready(function() {
             });
 
             const data = await response.json();
-if (response.ok) {
+            if (response.ok) {
                 while (chatArea.firstChild) {
                     chatArea.removeChild(chatArea.firstChild);
                 }
@@ -400,184 +457,205 @@ if (response.ok) {
             console.error('Error:', error);
         }
     }
-    
-    // Image and Camera Functions
+
     function toggleImageUpload() {
-        document.getElementById('image-upload-section').classList.toggle('d-none');
+        const uploadContainer = document.getElementById("upload-container");
+        if (uploadContainer.classList.contains("d-none")) {
+            uploadContainer.classList.remove("d-none");
+        } else {
+            uploadContainer.classList.add("d-none");
+        }
     }
 
     function handleImagePreview(e) {
-        const file = e.target.files[0];
-        if (file) {
+        if (e.target.files && e.target.files[0]) {
             const reader = new FileReader();
-            reader.onload = function(event) {
-                imagePreview.src = event.target.result;
+            
+            reader.onload = function(e) {
+                imagePreview.src = e.target.result;
                 imagePreviewContainer.classList.remove("d-none");
-                console.log("Ảnh đã được tải lên và hiển thị xem trước");
-            };
-            reader.readAsDataURL(file);
+            }
+            
+            reader.readAsDataURL(e.target.files[0]);
         }
     }
 
     async function processImage() {
-        if (!imageInput.files[0]) {
-            alert("Vui lòng chọn một hình ảnh trước.");
+        if (!imageInput.files || !imageInput.files[0]) {
+            alert("Vui lòng chọn một hình ảnh");
             return;
         }
-
-        console.log("Process Image button clicked");
-        console.log("Đang gửi ảnh để xử lý...");
-
-        // Show progress
+        
         progressContainer.classList.remove("d-none");
         progressBar.style.width = "0%";
+        processImageButton.disabled = true;
         
-        // Create animation
-        let progress = 0;
-        const interval = setInterval(() => {
-            progress += 5;
-            if (progress > 90) clearInterval(interval);
-            progressBar.style.width = progress + "%";
-        }, 100);
-
+        const formData = new FormData();
+        formData.append("image", imageInput.files[0]);
+        formData.append("subject", subjectSelect ? subjectSelect.value : "chung");
+        formData.append("mode", modeSelect ? modeSelect.value : "giải bài tập");
+        formData.append("solution_mode", currentSolutionMode);
+        
         try {
-            const formData = new FormData();
-            formData.append('image', imageInput.files[0]);
+            // Simulation of progress
+            let progress = 0;
+            const interval = setInterval(() => {
+                progress += 5;
+                progressBar.style.width = `${Math.min(progress, 90)}%`;
+                if (progress >= 90) clearInterval(interval);
+            }, 200);
             
-            // Add selected mode and subject
-            const mode = modeSelect ? modeSelect.value : "giải bài tập";
-            const subject = subjectSelect ? subjectSelect.value : "chung";
-            formData.append('mode', mode);
-            formData.append('subject', subject);
-            formData.append('solution_mode', activeSolutionMode);
-
-            const response = await fetch('/upload_image', {
-                method: 'POST',
+            const response = await fetch("/upload_image", {
+                method: "POST",
                 body: formData
             });
-
-            // Complete progress animation
+            
+            const data = await response.json();
+            
+            // Clear simulation and show 100%
             clearInterval(interval);
             progressBar.style.width = "100%";
             
-            // Process response
-                const data = await response.json();
-                console.log("Ảnh đã được xử lý thành công");
-                
-                // Add message to chat
-                addMessage(`[Ảnh đã tải lên]`, "user");
-                addMessage(data.response, "bot");
-                
-                // Reset form and hide progress
-                imagePreviewContainer.classList.add("d-none");
+            setTimeout(() => {
                 progressContainer.classList.add("d-none");
-                imageInput.value = "";
-                document.getElementById('image-upload-section').classList.add('d-none');
+                processImageButton.disabled = false;
                 
-                scrollToBottom();
-            } else {
-                const errorData = await response.json();
-                console.error("Error:", errorData.error);
-                alert("Lỗi: " + (errorData.error || "Không thể xử lý hình ảnh"));
-                progressContainer.classList.add("d-none");
-            }
+                if (response.ok) {
+                    // Hide upload container
+                    document.getElementById("upload-container").classList.add("d-none");
+                    
+                    // Reset file input and preview
+                    imageInput.value = "";
+                    imagePreviewContainer.classList.add("d-none");
+                    
+                    // Create image message
+                    const userMessageElement = document.createElement("div");
+                    userMessageElement.className = "message user-message";
+                    
+                    const userAvatarDiv = document.createElement("div");
+                    userAvatarDiv.className = "message-avatar user-avatar";
+                    
+                    const userContentDiv = document.createElement("div");
+                    userContentDiv.className = "message-content";
+                    
+                    // Add a small preview of the image
+                    const imagePreviewElement = document.createElement("div");
+                    imagePreviewElement.className = "user-image-preview";
+                    
+                    const imgElement = document.createElement("img");
+                    imgElement.src = data.original_image;
+                    imgElement.alt = "Ảnh đã tải lên";
+                    imgElement.classList.add("img-thumbnail");
+                    imgElement.style.maxHeight = "150px";
+                    
+                    imagePreviewElement.appendChild(imgElement);
+                    userContentDiv.appendChild(imagePreviewElement);
+                    userMessageElement.appendChild(userAvatarDiv);
+                    userMessageElement.appendChild(userContentDiv);
+                    chatArea.appendChild(userMessageElement);
+                    
+                    // Create bot response message
+                    const botMessageElement = document.createElement("div");
+                    botMessageElement.className = "message bot-message";
+                    
+                    const botAvatarDiv = document.createElement("div");
+                    botAvatarDiv.className = "message-avatar bot-avatar";
+                    
+                    const botContentDiv = document.createElement("div");
+                    botContentDiv.className = "message-content";
+                    botContentDiv.innerHTML = formatMessage(data.response);
+                    
+                    botMessageElement.appendChild(botAvatarDiv);
+                    botMessageElement.appendChild(botContentDiv);
+                    chatArea.appendChild(botMessageElement);
+                    
+                    scrollToBottom();
+                    
+                    // Format math if MathJax is available
+                    if (typeof MathJax !== 'undefined') {
+                        MathJax.typesetPromise([botContentDiv]).catch(err => console.error('MathJax error:', err));
+                    }
+                } else {
+                    alert(data.error || "Có lỗi xảy ra khi xử lý hình ảnh");
+                }
+            }, 500);
         } catch (error) {
-            console.error("Error:", error);
-            alert("Đã xảy ra lỗi khi xử lý hình ảnh. Vui lòng thử lại sau.");
             progressContainer.classList.add("d-none");
+            processImageButton.disabled = false;
+            console.error("Error:", error);
+            alert("Không thể kết nối đến máy chủ. Vui lòng thử lại sau.");
         }
     }
 
     function openCamera() {
-        // Get camera modal elements
-        const cameraModal = new bootstrap.Modal(document.getElementById('cameraModal'));
-        const video = document.getElementById('video');
-        const canvas = document.getElementById('canvas');
-        const takePhotoButton = document.getElementById('takePhotoButton');
+        const videoContainer = document.getElementById("video-container");
+        const videoElement = document.getElementById("camera-video");
         
-        // Check if camera elements exist
-        if (!video || !canvas || !takePhotoButton) {
-            alert("Không thể truy cập camera. Vui lòng kiểm tra lại thiết bị của bạn.");
-            return;
-        }
-        
-        // Open modal
-        cameraModal.show();
-        
-        // Start camera when modal opens
-        document.getElementById('cameraModal').addEventListener('shown.bs.modal', function() {
-            // Get camera stream
-            navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" }, audio: false })
+        if (videoContainer.classList.contains("d-none")) {
+            navigator.mediaDevices.getUserMedia({ video: true })
                 .then(function(stream) {
-                    video.srcObject = stream;
+                    videoElement.srcObject = stream;
+                    videoContainer.classList.remove("d-none");
                 })
                 .catch(function(err) {
                     console.error("Error accessing camera:", err);
-                    alert("Không thể truy cập camera. " + err.message);
+                    alert("Không thể truy cập camera. Vui lòng kiểm tra quyền truy cập và thử lại.");
                 });
-        });
-        
-        // Stop camera when modal closes
-        document.getElementById('cameraModal').addEventListener('hidden.bs.modal', function() {
-            if (video.srcObject) {
-                const tracks = video.srcObject.getTracks();
+        } else {
+            // Stop camera stream
+            const stream = videoElement.srcObject;
+            if (stream) {
+                const tracks = stream.getTracks();
                 tracks.forEach(track => track.stop());
-                video.srcObject = null;
+                videoElement.srcObject = null;
             }
-        });
-        
-        // Take photo button
-        takePhotoButton.onclick = takePhoto;
+            videoContainer.classList.add("d-none");
+        }
     }
 
     function takePhoto() {
-        const video = document.getElementById('video');
-        const canvas = document.getElementById('canvas');
-        const context = canvas.getContext('2d');
+        const videoElement = document.getElementById("camera-video");
+        const videoContainer = document.getElementById("video-container");
         
-        // Set canvas dimensions to match video
-        canvas.width = video.videoWidth;
-        canvas.height = video.videoHeight;
+        // Create a canvas element to capture the image
+        const canvas = document.createElement("canvas");
+        canvas.width = videoElement.videoWidth;
+        canvas.height = videoElement.videoHeight;
+        const ctx = canvas.getContext("2d");
+        ctx.drawImage(videoElement, 0, 0, canvas.width, canvas.height);
         
-        // Draw video frame to canvas
-        context.drawImage(video, 0, 0, canvas.width, canvas.height);
-        
-        // Convert canvas to file
+        // Convert to file
         canvas.toBlob(function(blob) {
-            const file = new File([blob], "camera_photo.jpg", { type: "image/jpeg" });
+            const file = new File([blob], "camera-capture.jpg", { type: "image/jpeg" });
             
-            // Create a FileList-like object
+            // Create a DataTransfer object to simulate a file input
             const dataTransfer = new DataTransfer();
             dataTransfer.items.add(file);
-            
-            // Set the file to the file input
             imageInput.files = dataTransfer.files;
             
-            // Trigger change event to update preview
-            const event = new Event('change', { bubbles: true });
-            imageInput.dispatchEvent(event);
+            // Update preview
+            imagePreview.src = canvas.toDataURL("image/jpeg");
+            imagePreviewContainer.classList.remove("d-none");
             
-            // Close camera modal
-            const cameraModal = bootstrap.Modal.getInstance(document.getElementById('cameraModal'));
-            cameraModal.hide();
-        }, 'image/jpeg', 0.95);
+            // Stop camera stream
+            const stream = videoElement.srcObject;
+            if (stream) {
+                const tracks = stream.getTracks();
+                tracks.forEach(track => track.stop());
+                videoElement.srcObject = null;
+            }
+            videoContainer.classList.add("d-none");
+        }, "image/jpeg");
     }
-
-    // Initialize the app
-    window.addEventListener('load', function() {
-        console.log("Window fully loaded, hiding page loading indicator");
-        document.getElementById('page-loading').style.display = 'none';
-        
-        // Initialize chat after window fully loaded
-        initializeChat();
-        
-        // Setup click handlers for all buttons
-        document.getElementById('math-button')?.addEventListener('click', toggleMathInput);
-        document.getElementById('insert-math-button')?.addEventListener('click', insertMathExpression);
-        document.getElementById('clear-chat-button')?.addEventListener('click', clearChatHistory);
-        document.getElementById('camera-button')?.addEventListener('click', openCamera);
-    });
-
+    
+    // Initialize event listeners for the custom buttons
+    document.getElementById('toggleDarkModeButton')?.addEventListener('click', toggleDarkMode);
+    document.getElementById('image-upload-button')?.addEventListener('click', toggleImageUpload);
+    
+    // Reference to the clear-chat-button element in HTML
+    // Đã loại bỏ liên kết này để nút "Xóa lịch sử" không hoạt động
+    // document.getElementById('clear-chat-button')?.addEventListener('click', clearChatHistory);
+    
     // Check if Bootstrap Modal is available
     if (typeof bootstrap !== 'undefined' && bootstrap.Modal) {
         console.log("Bootstrap Modal is available");
