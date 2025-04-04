@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <title>Trợ Lý AI Học Tập</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f5f5f5;
+            margin: 0;
+            padding: 0;
+            color: #333;
+        }
+        .loading {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.9);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        .loading-text {
+            margin-top: 20px;
+            font-size: 18px;
+            color: #4285f4;
+        }
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 5px solid #f3f3f3;
+            border-top: 5px solid #4285f4;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .container {
+            max-width: 1000px;
+            margin: 20px auto;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        .header {
+            background: linear-gradient(135deg, #4285f4, #34a853);
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 28px;
+        }
+        .header p {
+            margin: 10px 0 0;
+            opacity: 0.9;
+        }
+        .content {
+            padding: 20px;
+        }
+        .responsive-container {
+            position: relative;
+            overflow: hidden;
+            width: 100%;
+            padding-top: 75%; /* 4:3 Aspect Ratio */
+        }
+        .responsive-iframe {
+            position: absolute;
+            top: 0;
+            left: 0;
+            bottom: 0;
+            right: 0;
+            width: 100%;
+            height: 100%;
+            border: none;
+            border-radius: 8px;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        .direct-link {
+            display: block;
+            text-align: center;
+            margin: 15px 0;
+            padding: 10px;
+            background-color: #4285f4;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            font-weight: bold;
+        }
+        .direct-link:hover {
+            background-color: #3367d6;
+        }
+        .footer {
+            text-align: center;
+            margin-top: 20px;
+            padding: 10px;
+            font-size: 14px;
+            color: #666;
+        }
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 24px;
+            }
+            .responsive-container {
+                padding-top: 100%; /* Taller aspect ratio on mobile */
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Loading indicator -->
+    <div id="loading" class="loading">
+        <div class="spinner"></div>
+        <div class="loading-text">Đang tải Trợ Lý AI...</div>
+    </div>
+    
+    <div class="container">
+        <div class="header">
+            <h1>Trợ Lý AI Học Tập</h1>
+            <p>Hệ thống trợ lý AI thông minh hỗ trợ học tập mọi môn học</p>
+        </div>
+        <div class="content">
+            <a href="https://vq.pike.replit.dev/" target="_blank" class="direct-link">Mở Trợ Lý AI trong tab mới</a>
+            <div class="responsive-container">
+                <iframe id="assistantFrame" class="responsive-iframe" src="https://vq.pike.replit.dev/" allowfullscreen></iframe>
+            </div>
+        </div>
+        <div class="footer">
+            &copy; 2025 Trợ Lý AI Học Tập - Hỗ trợ học sinh, sinh viên học tập hiệu quả
+        </div>
+    </div>
+
+    <script>
+        // Hiển thị loading screen
+        const loadingElement = document.getElementById('loading');
+        const iframe = document.getElementById('assistantFrame');
+        
+        // Đặt thời gian tối đa chờ đợi (30 giây)
+        const maxWaitTime = 30000; 
+        let loadTimeout;
+        
+        // Xử lý khi iframe đã tải xong
+        iframe.onload = function() {
+            clearTimeout(loadTimeout);
+            iframe.style.opacity = "1";
+            loadingElement.style.display = "none";
+        };
+        
+        // Đặt thời gian chờ tối đa
+        loadTimeout = setTimeout(function() {
+            loadingElement.innerHTML = `
+                <div style="text-align: center; padding: 20px;">
+                    <h2 style="color: #d93025;">Không thể tải Trợ lý AI</h2>
+                    <p>Có vẻ như Trợ lý AI đang tải quá lâu hoặc gặp sự cố.</p>
+                    <p>Vui lòng thử một trong các cách sau:</p>
+                    <ul style="text-align: left; margin: 20px auto; max-width: 400px;">
+                        <li>Làm mới trang này</li>
+                        <li>Sử dụng liên kết "Mở Trợ Lý AI trong tab mới" ở trên</li>
+                        <li>Truy cập trực tiếp: <a href="https://vq.pike.replit.dev/" style="color: #4285f4;">https://vq.pike.replit.dev/</a></li>
+                    </ul>
+                </div>
+            `;
+        }, maxWaitTime);
+    </script>
+</body>
+</html>
