@@ -32,14 +32,14 @@ app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max upload size
 logger.debug("Setting app config")
 app.config['UPLOAD_FOLDER'] = os.path.join('static', 'uploads')
 
-# Đặt API key từ biến môi trường
+# Đặt API key từ biến môi trường - không lưu vào app.config nữa để tránh ghi đè
 logger.debug("Setting API key from environment variable")
 api_key = os.environ.get('GOOGLE_AI_API_KEY')
 if api_key:
-    app.config['GOOGLE_AI_API_KEY'] = api_key
+    # KHÔNG lưu vào app.config nữa, để huggingface_api.py luôn ưu tiên lấy từ biến môi trường
+    # app.config['GOOGLE_AI_API_KEY'] = api_key  
     logger.info(f"API key loaded from environment (length: {len(api_key)})")
 else:
-    app.config['GOOGLE_AI_API_KEY'] = None
     logger.warning("No API key found in environment variables.")
 
 logger.debug("Setting app config")
@@ -83,12 +83,13 @@ def index():
         if 'chat_history' not in session:
             session['chat_history'] = []
         
-        # Check if API key is set, if not redirect to set API key page
-        if not app.config['GOOGLE_AI_API_KEY'] and 'google_ai_api_key' not in session:
-            logger.info("API key not set, redirecting to API key page")
+        # Kiểm tra xem có API key trong biến môi trường không
+        env_api_key = os.environ.get('GOOGLE_AI_API_KEY')
+        if not env_api_key and 'google_ai_api_key' not in session:
+            logger.info("API key not set in environment or session, redirecting to API key page")
             return redirect(url_for('set_api_key'))
         
-        # Use session API key if available
+        # Use session API key if available and store in app.config for form display
         if 'google_ai_api_key' in session:
             app.config['GOOGLE_AI_API_KEY'] = session['google_ai_api_key']
         

@@ -42,29 +42,29 @@ def get_ai_response(prompt: str, context: Optional[str] = None, image_url: Optio
         app_key = None
         env_key = None
         
-        # Try to get from Flask app config
-        try:
-            app_key = current_app.config.get('GOOGLE_AI_API_KEY')
-            if app_key:
-                logger.debug(f"API key found in app config (length: {len(app_key)})")
-                # Lấy vài ký tự đầu và cuối để debug
-                masked_app_key = f"{app_key[:4]}...{app_key[-4:]}" if len(app_key) > 8 else "***"
-                logger.debug(f"App config API key (masked): {masked_app_key}")
-                api_key = app_key
-        except Exception as e:
-            logger.debug(f"Error getting API key from app config: {e}")
-            # If Flask app context is not available, try from environment
-            pass
-        
-        # Check environment variable too
+        # Ưu tiên lấy từ environment variable trước
         env_key = os.environ.get("GOOGLE_AI_API_KEY")
         if env_key:
             logger.debug(f"API key found in environment (length: {len(env_key)})")
             # Lấy vài ký tự đầu và cuối để debug
             masked_env_key = f"{env_key[:4]}...{env_key[-4:]}" if len(env_key) > 8 else "***"
             logger.debug(f"Environment API key (masked): {masked_env_key}")
-            if not api_key:  # Chỉ dùng env_key nếu chưa có api_key từ app config
-                api_key = env_key
+            api_key = env_key  # Luôn dùng env_key nếu có
+        
+        # Chỉ khi không có từ environment variable, mới lấy từ app config
+        if not api_key:
+            try:
+                app_key = current_app.config.get('GOOGLE_AI_API_KEY')
+                if app_key:
+                    logger.debug(f"API key found in app config (length: {len(app_key)})")
+                    # Lấy vài ký tự đầu và cuối để debug
+                    masked_app_key = f"{app_key[:4]}...{app_key[-4:]}" if len(app_key) > 8 else "***"
+                    logger.debug(f"App config API key (masked): {masked_app_key}")
+                    api_key = app_key
+            except Exception as e:
+                logger.debug(f"Error getting API key from app config: {e}")
+                # If Flask app context is not available, pass
+                pass
         
         # Final check
         if not api_key:
@@ -381,8 +381,8 @@ def call_gemini_api(prompt: str, api_key: str, image_url: Optional[str] = None) 
             "temperature": 0.7,
             "top_k": 40,
             "top_p": 0.95,
-            "max_output_tokens": 800,
-            # Kích thước đầu ra tối đa
+            "max_output_tokens": 1000,
+            # Kích thước đầu ra tối đa và số lượng phản hồi
             "candidate_count": 1
         },
         "safety_settings": [
