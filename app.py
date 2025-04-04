@@ -23,16 +23,24 @@ logger = logging.getLogger(__name__)
 
 # Create Flask app 
 app = Flask(__name__, static_folder='static', static_url_path='/static')
-# Đặt secret key trực tiếp để đảm bảo hoạt động
+# Đặt secret key từ biến môi trường hoặc sử dụng giá trị mặc định 
 logger.debug("Setting app secret key")
-app.secret_key = "your_secure_secret_key_for_sessions_123456789"
+app.secret_key = os.environ.get("SESSION_SECRET", "your_secure_secret_key_for_sessions_123456789")
 logger.debug("Setting app config")
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max upload size
 logger.debug("Setting app config")
 app.config['UPLOAD_FOLDER'] = os.path.join('static', 'uploads')
-# Đặt API key từ biến môi trường và xóa key mặc định
-logger.debug("Setting app config")
-app.config['GOOGLE_AI_API_KEY'] = os.environ.get('GOOGLE_AI_API_KEY')
+
+# Đặt API key từ biến môi trường
+logger.debug("Setting API key from environment variable")
+api_key = os.environ.get('GOOGLE_AI_API_KEY')
+if api_key:
+    app.config['GOOGLE_AI_API_KEY'] = api_key
+    logger.info(f"API key loaded from environment (length: {len(api_key)})")
+else:
+    app.config['GOOGLE_AI_API_KEY'] = None
+    logger.warning("No API key found in environment variables.")
+
 logger.debug("Setting app config")
 app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 31536000  # 1 năm cache cho static files
 

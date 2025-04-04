@@ -4,8 +4,8 @@ import requests
 import base64
 from typing import Optional, Dict, Any
 
-# Set up logging - giảm mức log để tăng hiệu suất
-logging.basicConfig(level=logging.INFO)
+# Set up logging - tăng mức log để dễ debug
+logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
 # Lời chào mở đầu
@@ -230,6 +230,16 @@ def call_gemini_api(prompt: str, api_key: str, image_url: Optional[str] = None) 
     Returns:
         The text response from the API
     """
+    # Xác minh API key
+    if not api_key:
+        logger.error("API key is empty or None")
+        return "Không thể kết nối với Google AI API. API key không được cung cấp."
+    
+    # Ghi log API key (chỉ vài ký tự đầu và cuối để bảo mật)
+    key_len = len(api_key)
+    masked_key = f"{api_key[:4]}...{api_key[-4:]}" if key_len > 8 else "***"
+    logger.debug(f"Using API key: {masked_key} (length: {key_len})")
+    
     # URL theo phiên bản v1 với model gemini-1.5-pro
     url = "https://generativelanguage.googleapis.com/v1/models/gemini-1.5-pro:generateContent"
     headers = {
@@ -358,10 +368,37 @@ def call_gemini_api(prompt: str, api_key: str, image_url: Optional[str] = None) 
     }
     
     try:
-        response = requests.post(url, headers=headers, json=payload)
-        response.raise_for_status()  # Raise exception for HTTP errors
+        # Log payload size for debugging
+        payload_size = len(str(payload))
+        logger.debug(f"Sending request to {url}, payload size: {payload_size} bytes")
         
+        # Send request to API
+        response = requests.post(url, headers=headers, json=payload)
+        
+        # Check for HTTP errors and provide detailed error information
+        if response.status_code != 200:
+            error_detail = ""
+            try:
+                error_data = response.json()
+                if "error" in error_data:
+                    error_detail = f"Mã lỗi: {error_data.get('error', {}).get('code')}, " \
+                                   f"Lý do: {error_data.get('error', {}).get('message')}"
+                    logger.error(f"API error response: {error_detail}")
+            except:
+                error_detail = f"Lỗi HTTP {response.status_code}"
+                logger.error(f"API error response status code: {response.status_code}")
+            
+            # Đối với lỗi 400, có thể là do API key không hợp lệ
+            if response.status_code == 400:
+                return f"Lỗi kết nối đến API: API key không hợp lệ hoặc đã hết hạn. Vui lòng kiểm tra lại API key của bạn."
+            elif response.status_code == 403:
+                return f"Lỗi quyền truy cập API: API key không có quyền sử dụng dịch vụ này. Vui lòng kiểm tra quyền của API key."
+            else:
+                return f"Lỗi kết nối đến API: {error_detail}. Vui lòng thử lại sau hoặc kiểm tra cài đặt API key."
+        
+        # Parse response data
         data = response.json()
+        logger.debug(f"Received response: {str(data)[:200]}...")
         
         # Extract text from response
         if "candidates" in data and len(data["candidates"]) > 0:
@@ -371,8 +408,13 @@ def call_gemini_api(prompt: str, api_key: str, image_url: Optional[str] = None) 
         
         # If we can't extract text properly, return error
         logger.error(f"Unexpected API response format: {data}")
-        return "Lỗi khi xử lý phản hồi từ API. Vui lòng thử lại sau."
+        return "Lỗi khi xử lý phản hồi từ API. Định dạng phản hồi không đúng như mong đợi. Vui lòng thử lại sau."
     
     except requests.exceptions.RequestException as e:
         logger.error(f"API request failed: {str(e)}")
-        return "Không thể kết nối với Google AI API. Vui lòng kiểm tra kết nối mạng hoặc thử lại sau."
+        if "Invalid API key" in str(e):
+            return "Lỗi API key không hợp lệ. Vui lòng kiểm tra và cập nhật API key của bạn."
+        elif "Forbidden" in str(e):
+            return "API key không có quyền truy cập. Vui lòng kiểm tra quyền của API key."
+        else:
+            return f"Không thể kết nối với Google AI API: {str(e)}. Vui lòng kiểm tra kết nối mạng hoặc thử lại sau."
