@@ -23,9 +23,10 @@ logger = logging.getLogger(__name__)
 
 # Create Flask app 
 app = Flask(__name__, static_folder='static', static_url_path='/static')
-# Đặt secret key từ biến môi trường hoặc sử dụng giá trị mặc định 
+# Đặt secret key trực tiếp để đảm bảo hoạt động
 logger.debug("Setting app secret key")
-app.secret_key = os.environ.get("SESSION_SECRET", "your_secure_secret_key_for_sessions_123456789")
+app.secret_key = "your_secure_secret_key_for_sessions_123456789"  # Hardcode một giá trị để đảm bảo hoạt động
+logger.info(f"Secret key set with length: {len(app.secret_key)}")
 logger.debug("Setting app config")
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max upload size
 logger.debug("Setting app config")
