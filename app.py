@@ -81,6 +81,7 @@ def index():
         
         # Initialize chat history if not present
         if 'chat_history' not in session:
+            # Không thêm tin nhắn chào nữa, chỉ khởi tạo mảng trống
             session['chat_history'] = []
         
         # Kiểm tra xem có API key trong biến môi trường không
